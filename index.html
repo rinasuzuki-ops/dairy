@@ -1,917 +1,992 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>環境整備点検 ルートビルダー</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>ひとひ帳</title>
+<meta name="theme-color" content="#1A1E2C" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ひとひ帳" />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 <style>
-:root{--ink:#101821;--sub:#5A6B7B;--paper:#E7EAEE;--card:#fff;--line:#C9D1DA;
- --rail:#1F4E79;--stop:#C0392B;--amber:#8A6212;--band:#16324F;--green:#1F7A5C}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
- font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",system-ui,sans-serif;font-size:14px;line-height:1.6}
-.num{font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
-header{background:var(--band);color:#fff;padding:14px 22px}
-header h1{margin:0;font-size:19px;letter-spacing:.06em}
-header p{margin:3px 0 0;font-size:12px;color:#A9C3DC}
-.tabs{display:flex;gap:4px;padding:8px 16px 0;background:var(--band);flex-wrap:wrap}
-.tab{background:#2A4E72;color:#C9DBEC;border:0;padding:7px 14px;border-radius:4px 4px 0 0;
- cursor:pointer;font-size:12px;font-family:inherit}
-.tab.on{background:var(--paper);color:var(--band);font-weight:700}
-.tab.add{background:transparent;border:1px dashed #5B7FA3;color:#A9C3DC}
-.wrap{display:grid;grid-template-columns:330px 1fr;gap:16px;padding:16px;align-items:start}
-@media(max-width:900px){.wrap{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:4px;margin-bottom:14px}
-.card h2{margin:0;padding:10px 14px;font-size:13px;letter-spacing:.08em;
- border-bottom:1px solid var(--line);background:#F2F5F8;color:var(--band)}
-.pad{padding:12px 14px}
-.blk{border-bottom:1px solid #EDF0F3}
-.blkhead{padding:7px 14px;font-size:12px;font-weight:700;color:var(--rail);background:#F7F9FB;
- cursor:pointer;display:flex;justify-content:space-between;user-select:none}
-.blkbody{display:none;padding:2px 0 8px}.blk.open .blkbody{display:block}
-.sitem{display:flex;align-items:center;gap:8px;padding:4px 14px;font-size:13px}
-.sitem:hover{background:#F4F8FB}
-.sitem button{border:1px solid var(--line);background:#fff;border-radius:3px;cursor:pointer;
- font-size:11px;padding:1px 7px;color:var(--rail)}
-.sitem button:hover{background:var(--rail);color:#fff}
-.sitem .tag{font-size:10px;color:var(--sub);margin-left:auto}
-.ctl{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
-.ctl label{font-size:11px;color:var(--sub);display:block}
-.ctl input{width:76px;padding:5px 7px;border:1px solid var(--line);border-radius:3px;font-size:14px;font-family:inherit}
-.ctl input[type=date]{width:145px}.ctl input.w{width:150px}
-.btn{border:0;background:var(--rail);color:#fff;padding:8px 15px;border-radius:3px;cursor:pointer;
- font-size:13px;font-family:inherit}
-.btn:hover{background:#17395a}
-.btn.ghost{background:#fff;color:var(--rail);border:1px solid var(--rail)}
-.btn.sm{padding:5px 10px;font-size:12px}
-.stops{list-style:none;margin:0;padding:0}
-.stops li{display:flex;align-items:center;gap:6px;padding:6px 12px;border-bottom:1px solid #EEF1F4;
- font-size:13px;background:#fff;cursor:grab}
-.stops li.drag{opacity:.35}.stops li.over{border-top:2px solid var(--rail)}
-.stops li .grip{color:#9AA9B8;font-size:14px}
-.stops li .ord{width:20px;color:var(--sub);font-size:11px}.stops li .nm{flex:1}
-.stops li.ev{background:#FFF8E7}.stops li.ev .nm{color:var(--amber);font-weight:700}
-.mini{border:1px solid var(--line);background:#fff;border-radius:3px;cursor:pointer;font-size:11px;
- padding:1px 6px;font-family:inherit}
-.mini:hover{background:#EEF3F8}
-.row{display:grid;grid-template-columns:78px 26px 1fr;align-items:stretch}
-.row .t{padding:6px 8px;text-align:right;font-size:13px;color:var(--band)}
-.row .rail{position:relative}
-.row .rail::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:3px;background:#D3DCE5}
-.row.train .rail::before{background:var(--rail)}
-.row .dot{position:absolute;left:5px;top:9px;width:15px;height:15px;border-radius:50%;
- background:#fff;border:3px solid var(--stop);z-index:1}
-.row .body{padding:6px 10px}
-.stopname{font-weight:700;font-size:14px}
-.meta{font-size:11px;color:var(--sub)}
-.trainbox{background:#F2F6FA;border-left:3px solid var(--rail);padding:5px 9px;margin:3px 0;font-size:12px}
-.trainbox b{color:var(--rail)}
-.evbox{background:#FFF8E7;border-left:3px solid var(--amber);padding:5px 9px;margin:3px 0;font-size:12px;color:var(--amber)}
-.miss{background:#FDF0EE;border-left:3px solid var(--stop);color:var(--stop);padding:5px 9px;margin:3px 0;font-size:12px}
-.walk{font-size:11px;color:var(--sub);padding:2px 0}
-.chk{display:inline-block;font-size:10px;color:var(--rail);border:1px solid #B8C7D6;border-radius:2px;
- padding:0 6px;margin-left:5px;text-decoration:none;background:#fff}
-.chk:hover{background:var(--rail);color:#fff}
-.chk.w{border-color:#C9A227;color:#8A6212}.chk.w:hover{background:#8A6212;color:#fff}
-.ed{width:44px;padding:0 4px;border:1px dashed #9BB0C4;border-radius:2px;font-size:11px;
- background:#FFFDF3;text-align:right;font-family:inherit}
-.ed.wide{width:130px;text-align:left}
-.ed:focus{border:1px solid var(--rail);background:#fff;outline:none}
-.stnsel{font-size:11px;font-family:inherit;border:1px solid #9BB0C4;border-radius:2px;
- background:#F0F6FC;padding:0 2px;color:var(--rail);max-width:190px}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{border:1px solid var(--line);padding:5px 8px;text-align:left}
-th{background:#F2F5F8;font-size:11px;color:var(--band)}
-.empty{padding:30px 14px;color:var(--sub);font-size:13px;text-align:center}
-.warn{background:#FFF8E7;border:1px solid #E8D9A8;color:var(--amber);padding:8px 12px;font-size:12px;margin:0 14px 12px;border-radius:3px}
-.hint{font-size:11px;color:var(--sub);margin:6px 0 0}
-#msg{display:none;margin:10px 16px -4px;padding:8px 12px;background:#E2EFDA;border:1px solid #A9C9A4;
- border-radius:3px;font-size:12px;color:#1F5C3D}
-.lg{border:1px solid #C9D6E2;border-radius:4px;background:#F7FAFC;margin:4px 0;overflow:hidden}
-.lg.lgng{border-color:#E2B4AC;background:#FDF6F4}
-.lghd{display:flex;align-items:center;gap:8px;padding:4px 8px;background:#E8EFF6;
- border-bottom:1px solid #D6E0EA;font-size:12px;flex-wrap:wrap}
-.lg.lgng .lghd{background:#F8E4DF;border-bottom-color:#E9C8C0}
-.lghd .sp{flex:1}
-.lgt{width:100%;border-collapse:collapse;font-size:12px}
-.lgt td{border:0;border-bottom:1px solid #E7EDF3;padding:4px 8px;vertical-align:middle}
-.lgt tr:last-child td{border-bottom:0}
-.lgt td.k{width:78px;color:#5A6B7B;font-size:11px;background:#F0F4F8;white-space:nowrap}
-.stnedit{margin-top:4px;padding:4px 6px;background:#fff;border:1px solid #D6E0EA;border-radius:3px}
-.ng{color:#C0392B}.wn{color:#8A6212}.okk{color:#1F7A5C}
-.edt{width:62px;padding:1px 5px;border:1px dashed #9BB0C4;border-radius:2px;font-size:12px;
- background:#FFFDF3;text-align:center;font-family:ui-monospace,Consolas,monospace}
-.edt.fixed{border:1px solid #1F7A5C;background:#EAF7F0;color:#155C43;font-weight:bold}
-.edt:focus{border:1px solid #1F4E79;background:#fff;outline:none}
-.modesw{display:inline-block;border:1px solid #B8C7D6;border-radius:3px;overflow:hidden;vertical-align:middle}
-.modesw .mini{border:0;border-right:1px solid #DCE3EA;border-radius:0;margin:0;padding:1px 8px}
-.modesw .mini:last-child{border-right:0}
-.modesw .mini.onmode{background:#1F4E79;color:#fff;font-weight:bold}
-.stnadd{width:96px!important;text-align:left!important}
-.nf{width:100%;padding:6px 8px;margin-bottom:6px;border:1px solid var(--line);
- border-radius:3px;font-size:13px;font-family:inherit}
-.nrow{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;border-bottom:1px dotted #DCE3EA}
-.nrow .tag{margin-left:auto;color:var(--sub);font-size:10px}
-.qbox{width:100%;padding:7px 9px;border:1px solid var(--rail);border-radius:3px;font-size:13px;font-family:inherit}
-.qbox:focus{outline:2px solid #BBD3EA}
-.hit{padding:5px 14px;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #F0F3F6}
-.hit:hover{background:#F4F8FB}
-.hit button{border:1px solid var(--line);background:#fff;border-radius:3px;cursor:pointer;
- font-size:11px;padding:1px 7px;color:var(--rail);font-family:inherit}
-.hit button:hover{background:var(--rail);color:#fff}
-.hit .tag{font-size:10px;color:var(--sub);margin-left:auto}
-#links{display:none;padding:0 14px 12px}#links.on{display:block}
-#links a{display:block;padding:3px 0;font-size:12px;border-bottom:1px dotted #DCE3EA}
+  html, body { margin: 0; padding: 0; background: #1A1E2C; }
+  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  textarea:focus, input:focus { border-color: #E3A552 !important; }
 </style>
 </head>
 <body>
-<header>
-  <h1>環境整備点検　ルートビルダー</h1>
-  <p>使う駅も選べます。空欄（自動）にしておくと、いちばん早い駅の組み合わせを自動で選びます</p>
-</header>
-<div class="tabs" id="tabs"></div>
-<div id="msg"></div>
+<div id="root"></div>
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef, useMemo } = React;
 
-<div class="wrap">
-  <div>
-    <div class="card">
-      <h2>1. このコースの設定</h2>
-      <div class="pad ctl">
-        <div><label>コース名（日程・班）</label><input class="w" id="cname" onchange="setC('name',this.value)"></div>
-        <div><label>点検日</label><input id="cdate" type="date" onchange="setC('date',this.value)"></div>
-        <div><label>開始時刻</label><input id="cstart" onchange="setC('start',this.value)"></div>
-      </div>
-      <div class="pad" style="padding-top:0"><button class="btn ghost sm" id="delbtn" onclick="delC()">このコースを削除</button></div>
-    </div>
-    <div class="card">
-      <h2>2. 共通ルール</h2>
-      <div class="pad ctl">
-        <div><label>点検(分)</label><input id="insp" type="number" value="6"></div>
-        <div><label>乗車待ち(分)</label><input id="buf" type="number" value="4"></div>
-        <div><label>同駅の店間(分)</label><input id="same" type="number" value="3"></div>
-        <div><label>閉店の前倒し(分)</label><input id="close" type="number" value="180"></div>
-      </div>
-    </div>
-    <div class="card"><h2>3. 店舗を追加</h2>
-      <div class="pad" style="padding-bottom:8px">
-        <input id="q" class="qbox" placeholder="店名・駅名で検索（例：新宿、蒲田、ともちん）" oninput="buildPicker()">
-        <p class="hint" id="qhint"></p>
-      </div>
-      <div id="picker"></div>
-      <div class="pad" style="border-top:1px solid #EDF0F3">
-        <button class="btn ghost sm" onclick="toggleNew()">＋ リストにない新店を登録</button>
-        <div id="newform" style="display:none;margin-top:10px">
-          <input class="nf" id="n_name" placeholder="店名（必須／例：なぎちゃんラーメン 三軒茶屋店）">
-          <div style="display:flex;gap:6px">
-            <input class="nf" id="n_stn" placeholder="最寄駅（必須／例：三軒茶屋）">
-            <input class="nf" id="n_ex" placeholder="出口（例：南口）" style="width:110px">
-            <input class="nf" id="n_w" type="number" placeholder="徒歩分" style="width:80px">
-          </div>
-          <select class="nf" id="n_blk"></select>
-          <input class="nf" id="n_addr" placeholder="住所（Googleマップ用・任意だが入れると便利）">
-          <button class="btn sm" onclick="saveNew()">この新店を登録する</button>
-          <p class="hint">登録すると検索・ブロック一覧に出ます。自動保存されるので毎回入れ直す必要はありません。</p>
-        </div>
-        <div id="newlist"></div>
-      </div>
-      <div class="pad" style="border-top:1px solid #EDF0F3">
-        <button class="btn ghost sm" onclick="toggleImp()">Excel・CSVからまとめて登録</button>
-        <div id="impform" style="display:none;margin-top:10px">
-          <p class="hint" style="margin:0 0 6px"><b>店舗マスタのExcelをそのまま取り込めます。</b>
-          シート全体（見出し行を含む）をコピーして貼り付けてください。<br>
-          住所で照合するので、<b>すでにある店は二重登録されません</b>。新しく足した行だけが追加されます。</p>
-          <label class="hint" style="display:block;margin:0 0 6px">
-            <input type="checkbox" id="i_upd" checked> 既存店の出口・徒歩分も、Excelの値で上書きする</label>
-          <p class="hint" style="margin:0 0 6px"><b>方法1：</b>Excelで範囲をコピーして、下の枠に貼り付け</p>
-          <textarea class="nf" id="i_tsv" rows="5"
-            placeholder="店舗マスタのシートをそのままコピーして貼り付けてください（見出し行を含めてOK）。"></textarea>
-          <button class="btn sm" onclick="impText()">貼り付けた内容を登録</button>
-          <p class="hint" style="margin:10px 0 6px"><b>方法2：</b>CSVファイルを読み込む</p>
-          <input type="file" id="i_csv" accept=".csv,.txt" onchange="impCsv(event)">
-          <p class="hint" id="i_res"></p>
-        </div>
-      </div></div>
-    <div class="card">
-      <h2>4. イベントを追加</h2>
-      <div class="pad">
-        <button class="btn ghost sm" onclick="addEv('rest')">休憩</button>
-        <button class="btn ghost sm" onclick="addEv('quiz')">質問タイム（車内）</button>
-        <button class="btn ghost sm" onclick="addEv('jan')">シェアじゃんけん</button>
-      </div>
-    </div>
-    <div class="card">
-      <h2>5. 保存</h2>
-      <div class="pad">
-        <p class="hint" id="savest" style="margin:0 0 8px">…</p>
-        <button class="btn ghost sm" onclick="expAll()">バックアップを書き出す</button>
-        <input type="file" id="imp" accept=".json" style="display:none" onchange="impAll(event)">
-        <button class="btn ghost sm" onclick="document.getElementById('imp').click()">読み込む</button>
-        <button class="btn ghost sm" onclick="resetAll()">最初からやり直す</button>
-        <p class="hint" id="ovcount"></p>
-      </div>
-    </div>
-  </div>
+/* ============ 色とフォント ============ */
+const C = {
+  bg: "#1A1E2C", panel: "#232939", line: "#313A52",
+  card: "#F6F0E1", card2: "#F3E8DA", cardLine: "#E2D7BF",
+  ink: "#3B342A", inkSoft: "#84796A",
+  amber: "#E3A552", amberDark: "#B97F33", plum: "#C96F5E",
+  textOnDark: "#EAE5D7", mutedOnDark: "#8E96AB",
+  green: "#7FA96B", greenDark: "#5E8A4C",
+};
+const DISPLAY = "'Shippori Mincho', serif";
+const BODY = "'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif";
 
-  <div>
-    <div class="card">
-      <h2>6. 巡回順（ドラッグで入れ替え）</h2>
-      <ul class="stops" id="stops"></ul>
-      <div class="pad"><button class="btn ghost sm" onclick="clearAll()">このコースを空にする</button></div>
-    </div>
-    <div class="card">
-      <h2>7. ざっくり出力（承認用）</h2>
-      <div class="pad">
-        <button class="btn" onclick="csvRough()">ざっくり版をExcelに出力</button>
-        <button class="btn ghost" onclick="csvFull()">詳細版（駅・号車・出口つき）</button>
-        <p class="hint">全コースまとめて1ファイルに出ます。</p>
-      </div>
-    </div>
-    <div class="card">
-      <h2>8. 当日スケジュール</h2>
-      <div class="pad" style="padding-bottom:6px">
-        <button class="btn ghost sm" onclick="toggleLinks()">全区間の確認リンクを一覧表示</button>
-      </div>
-      <div id="links"></div><div id="warn"></div>
-      <div id="sched"><div class="empty">左から店舗を追加してください。</div></div>
-    </div>
-    <div class="card">
-      <h2>9. 店舗発表用（閉店時刻つき）</h2>
-      <div class="pad" id="announce"></div>
-    </div>
-    <div class="card">
-      <h2>10. 運行表（書式つき・Excel／スプレッドシート貼り付け用）</h2>
-      <div class="pad">
-        <button class="btn" onclick="copyRich()">書式つきでコピー</button>
-        <button class="btn ghost" onclick="dlXls()">Excelファイルで保存</button>
-        <p class="hint">「書式つきでコピー」→ Excelやスプレッドシートにそのまま貼ると、色・罫線ごと入ります。</p>
-      </div>
-      <div class="pad" style="padding-top:0;overflow:auto" id="rich"></div>
-    </div>
-  </div>
-</div>
+/* ============ 日付 ============ */
+const pad = (n) => String(n).padStart(2, "0");
+const toKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fromKey = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const WD = ["日","月","火","水","木","金","土"];
+const fmtLong = (k) => { const d = fromKey(k); return `${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）`; };
+const fmtShort = (k) => { const d = fromKey(k); return `${d.getMonth()+1}/${d.getDate()}`; };
+const fmtTime = (iso) => { const d = new Date(iso); return `${d.getHours()}:${pad(d.getMinutes())}`; };
+const mondayOf = (d) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const weekDaysOf = (mk) => Array.from({length:7}, (_,i) => toKey(addDays(fromKey(mk), i)));
+const shiftMonth = (m, n) => { const d = new Date(+m.slice(0,4), +m.slice(5,7)-1+n, 1); return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; };
+const monthLabel = (m) => `${m.slice(0,4)}年${+m.slice(5,7)}月`;
 
-<script>
-const DATA = {"stores": [{"id": "H1", "name": "本社（事務所）", "blk": "A", "stn": "東銀座", "stns": [{"s": "東銀座", "ex": "A3", "w": 4, "n": 5}, {"s": "銀座", "ex": "A12", "w": 7, "n": 3}], "ex": "A3", "walk": 4, "n": 11, "note": "", "addr": "東京都中央区銀座3-13-11", "wsp": 8, "exn": 5}, {"id": "23", "name": "東銀座はるちゃん（総本店）", "blk": "A", "stn": "東銀座", "stns": [{"s": "東銀座", "ex": "A3", "w": 4, "n": 2}, {"s": "銀座", "ex": "A12", "w": 7, "n": 1}], "ex": "A3", "walk": 4, "n": 3, "note": "", "addr": "東京都中央区銀座3-11-6", "wsp": 3, "exn": 2}, {"id": "10", "name": "新橋ニューともちん", "blk": "A", "stn": "新橋", "stns": [{"s": "新橋", "ex": "A２", "w": 3, "n": 3}], "ex": "A２", "walk": 3, "n": 3, "note": "", "addr": "東京都港区新橋2-20-15", "wsp": 0, "exn": 2}, {"id": "11", "name": "新橋はるちゃん", "blk": "A", "stn": "新橋", "stns": [{"s": "新橋", "ex": "A3", "w": 4, "n": 4}, {"s": "川口", "ex": "東口", "w": 6, "n": 2}], "ex": "東口", "walk": 5, "n": 6, "note": "", "addr": "東京都港区新橋2-20-15", "wsp": 3, "exn": 4}, {"id": "46", "name": "ニュー新橋 高円寺ともちん", "blk": "A", "stn": "新橋", "stns": [{"s": "新橋", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "8/20オープン", "addr": "東京都港区新橋2-16-1", "wsp": 0, "exn": 0}, {"id": "7", "name": "虎ノ門たきちゃん", "blk": "A", "stn": "虎ノ門", "stns": [{"s": "虎ノ門", "ex": "虎ノ門ヒル", "w": 6, "n": 5}], "ex": "虎ノ門ヒル", "walk": 6, "n": 5, "note": "", "addr": "東京都港区虎ノ門1-17-1", "wsp": 1, "exn": 1}, {"id": "16", "name": "神田ちえちゃん", "blk": "B", "stn": "神田", "stns": [{"s": "神田", "ex": "2", "w": 4, "n": 7}], "ex": "2", "walk": 4, "n": 7, "note": "", "addr": "東京都千代田区鍛冶町2-13-7", "wsp": 2, "exn": 4}, {"id": "25", "name": "神保町ニューともちん", "blk": "B", "stn": "神保町", "stns": [{"s": "神保町", "ex": "A5", "w": 4, "n": 5}], "ex": "A5", "walk": 4, "n": 5, "note": "", "addr": "東京都千代田区神田神保町1-12", "wsp": 2, "exn": 2}, {"id": "S2", "name": "神保町 煮干（凪）", "blk": "B", "stn": "神保町", "stns": [{"s": "神保町", "ex": "A5", "w": 4, "n": 1}], "ex": "A5", "walk": 4, "n": 1, "note": "", "addr": "東京都千代田区神田神保町2-24", "wsp": 0, "exn": 1}, {"id": "33", "name": "浅草橋なぎちゃん", "blk": "B", "stn": "浅草橋", "stns": [{"s": "浅草橋", "ex": "A1", "w": 3, "n": 4}], "ex": "A1", "walk": 3, "n": 4, "note": "", "addr": "東京都台東区柳橋1-13-3", "wsp": 5, "exn": 2}, {"id": "13", "name": "両国邦ちゃん", "blk": "C", "stn": "両国", "stns": [{"s": "両国", "ex": "東口", "w": 2, "n": 7}], "ex": "東口", "walk": 2, "n": 7, "note": "", "addr": "東京都墨田区横網1-3-1", "wsp": 0, "exn": 1}, {"id": "36", "name": "錦糸町なぎちゃん", "blk": "C", "stn": "錦糸町", "stns": [{"s": "錦糸町", "ex": "南口", "w": 5, "n": 6}], "ex": "南口", "walk": 5, "n": 6, "note": "", "addr": "東京都墨田区江東橋2-17-1", "wsp": 2, "exn": 1}, {"id": "6", "name": "新小岩邦ちゃん", "blk": "C", "stn": "新小岩", "stns": [{"s": "新小岩", "ex": "南口", "w": 6, "n": 6}], "ex": "南口", "walk": 6, "n": 6, "note": "", "addr": "東京都葛飾区新小岩1-50-9", "wsp": 0, "exn": 1}, {"id": "19", "name": "浅草生田庵", "blk": "C", "stn": "浅草", "stns": [{"s": "浅草", "ex": "8", "w": 4, "n": 4}, {"s": "川口", "ex": "東口", "w": 6, "n": 1}], "ex": "8", "walk": 4, "n": 5, "note": "", "addr": "東京都台東区花川戸1-6-4", "wsp": 4, "exn": 4}, {"id": "12", "name": "シンちゃん（新宿南口）", "blk": "D", "stn": "新宿", "stns": [{"s": "新宿", "ex": "南口", "w": 5, "n": 3}, {"s": "錦糸町", "ex": "南口", "w": 4, "n": 1}], "ex": "南口", "walk": 5, "n": 4, "note": "", "addr": "東京都新宿区新宿4-2-7", "wsp": 2, "exn": 1}, {"id": "1", "name": "新宿ゴールデン街本館", "blk": "D", "stn": "新宿", "stns": [{"s": "新宿", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "", "addr": "東京都新宿区歌舞伎町1-1-10", "wsp": 0, "exn": 0}, {"id": "5", "name": "新宿ナギチャン", "blk": "D", "stn": "新宿", "stns": [{"s": "新宿", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "", "addr": "東京都新宿区歌舞伎町1-9-6", "wsp": 0, "exn": 0}, {"id": "17", "name": "新館えっちゃん", "blk": "D", "stn": "新宿", "stns": [{"s": "新宿", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "", "addr": "東京都新宿区歌舞伎町1-15-8", "wsp": 0, "exn": 0}, {"id": "2", "name": "西新宿7丁目", "blk": "D", "stn": "大久保", "stns": [{"s": "大久保", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "", "addr": "東京都新宿区西新宿7-13-7", "wsp": 0, "exn": 0}, {"id": "9", "name": "小滝橋クマちゃん", "blk": "D", "stn": "大久保", "stns": [{"s": "大久保", "ex": "南口", "w": 7, "n": 2}, {"s": "新宿", "ex": "西口", "w": 11, "n": 1}], "ex": "南口", "walk": 7, "n": 3, "note": "", "addr": "東京都新宿区西新宿7-5-6", "wsp": 4, "exn": 2}, {"id": "35", "name": "高田馬場なぎちゃん", "blk": "D", "stn": "高田馬場", "stns": [{"s": "高田馬場", "ex": "早稲田", "w": 4, "n": 6}], "ex": "早稲田", "walk": 4, "n": 6, "note": "", "addr": "東京都新宿区高田馬場4-8-8", "wsp": 1, "exn": 2}, {"id": "21", "name": "中野邦ちゃん", "blk": "E", "stn": "中野", "stns": [{"s": "中野", "ex": "南口", "w": 5, "n": 4}, {"s": "中野三丁目", "ex": "ー", "w": 3, "n": 1}], "ex": "南口", "walk": 5, "n": 5, "note": "", "addr": "東京都中野区中野2-28-8", "wsp": 3, "exn": 2}, {"id": "43", "name": "東高円寺なぎちゃん", "blk": "E", "stn": "東高円寺", "stns": [{"s": "東高円寺", "ex": "B1", "w": 3, "n": 1}], "ex": "B1", "walk": 3, "n": 1, "note": "", "addr": "東京都杉並区和田3-58-7", "wsp": 0, "exn": 1}, {"id": "8", "name": "高円寺ともちん", "blk": "E", "stn": "高円寺", "stns": [{"s": "高円寺", "ex": "西口", "w": 5, "n": 7}], "ex": "西口", "walk": 5, "n": 7, "note": "", "addr": "東京都杉並区高円寺北2-21-4", "wsp": 0, "exn": 2}, {"id": "30", "name": "西荻窪なぎちゃん", "blk": "E", "stn": "西荻窪", "stns": [{"s": "西荻窪", "ex": "南口", "w": 2, "n": 6}], "ex": "南口", "walk": 2, "n": 6, "note": "", "addr": "東京都杉並区西荻南3-10-5", "wsp": 0, "exn": 1}, {"id": "18", "name": "池袋ひろちゃん", "blk": "F", "stn": "池袋", "stns": [{"s": "池袋", "ex": "西口中央", "w": 10, "n": 7}], "ex": "西口中央", "walk": 10, "n": 7, "note": "", "addr": "東京都豊島区西池袋1-39-1", "wsp": 4, "exn": 2}, {"id": "40", "name": "西池袋ニューともちん", "blk": "F", "stn": "池袋", "stns": [{"s": "池袋", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "", "addr": "東京都豊島区西池袋1-20-2", "wsp": 0, "exn": 0}, {"id": "34", "name": "江古田なぎちゃん", "blk": "F", "stn": "江古田", "stns": [{"s": "江古田", "ex": "南口", "w": 3, "n": 6}], "ex": "南口", "walk": 3, "n": 6, "note": "", "addr": "東京都練馬区旭丘1-76-4", "wsp": 0, "exn": 1}, {"id": "44", "name": "駒込なぎちゃん", "blk": "F", "stn": "駒込", "stns": [{"s": "駒込", "ex": "東口", "w": 2, "n": 1}], "ex": "東口", "walk": 2, "n": 1, "note": "", "addr": "東京都北区中里2-1-10", "wsp": 0, "exn": 1}, {"id": "H2", "name": "ファクトリー 達磨製麺", "blk": "F", "stn": "本蓮沼", "stns": [{"s": "本蓮沼", "ex": "A2", "w": 11, "n": 4}, {"s": "赤羽", "ex": "前野町四丁目", "w": 8, "n": 1}], "ex": "A2", "walk": 11, "n": 5, "note": "", "addr": "東京都板橋区大原町45-17", "wsp": 3, "exn": 4}, {"id": "37", "name": "渋谷 麺屋我ガ", "blk": "G", "stn": "渋谷", "stns": [{"s": "渋谷", "ex": "井の頭中央口", "w": 15, "n": 1}, {"s": "表参道", "ex": "B1", "w": 11, "n": 1}], "ex": "井の頭中央口", "walk": 13, "n": 2, "note": "", "addr": "東京都渋谷区渋谷2-8-8", "wsp": 4, "exn": 2}, {"id": "4", "name": "渋谷 BUTAO", "blk": "G", "stn": "渋谷", "stns": [{"s": "渋谷", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "", "addr": "東京都渋谷区東1-3-1", "wsp": 0, "exn": 0}, {"id": "20", "name": "渋谷かっちゃん", "blk": "G", "stn": "渋谷", "stns": [{"s": "渋谷", "ex": "西口", "w": 8, "n": 5}], "ex": "西口", "walk": 8, "n": 5, "note": "", "addr": "東京都渋谷区桜丘町3-4", "wsp": 4, "exn": 2}, {"id": "S1", "name": "下北沢なおちゃん", "blk": "G", "stn": "下北沢", "stns": [{"s": "下北沢", "ex": "南口", "w": 5, "n": 6}], "ex": "南口", "walk": 5, "n": 6, "note": "", "addr": "東京都世田谷区北沢2-12-7", "wsp": 2, "exn": 3}, {"id": "47", "name": "成城学園前なぎちゃん", "blk": "G", "stn": "成城学園前", "stns": [{"s": "成城学園前", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "9/4オープン", "addr": "東京都世田谷区成城6-9-7", "wsp": 0, "exn": 0}, {"id": "38", "name": "五反田ニューともちん", "blk": "H", "stn": "五反田", "stns": [{"s": "五反田", "ex": "東口", "w": 4, "n": 2}], "ex": "東口", "walk": 4, "n": 2, "note": "", "addr": "東京都品川区東五反田1-14-9", "wsp": 2, "exn": 2}, {"id": "F3", "name": "武蔵小山（FC）", "blk": "H", "stn": "武蔵小山", "stns": [{"s": "武蔵小山", "ex": "東口", "w": 4, "n": 6}], "ex": "東口", "walk": 4, "n": 6, "note": "", "addr": "東京都品川区小山3-22-19", "wsp": 0, "exn": 1}, {"id": "F2", "name": "青物横丁（FC）", "blk": "H", "stn": "青物横丁", "stns": [{"s": "青物横丁", "ex": "西口", "w": 3, "n": 7}, {"s": "浅草", "ex": "西口", "w": 3, "n": 1}], "ex": "西口", "walk": 3, "n": 8, "note": "", "addr": "東京都品川区南品川2-4-3", "wsp": 2, "exn": 2}, {"id": "15", "name": "田町えっちゃん", "blk": "H", "stn": "田町", "stns": [{"s": "田町", "ex": "東口(芝浦)", "w": 4, "n": 7}], "ex": "東口(芝浦)", "walk": 4, "n": 7, "note": "", "addr": "東京都港区芝浦3-1-30", "wsp": 1, "exn": 2}, {"id": "29", "name": "田町油そばセンター", "blk": "H", "stn": "田町", "stns": [{"s": "田町", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "", "addr": "東京都港区芝浦3-1-32", "wsp": 0, "exn": 0}, {"id": "28", "name": "大森なぎちゃん", "blk": "H", "stn": "大森", "stns": [{"s": "大森", "ex": "西口", "w": 3, "n": 6}], "ex": "西口", "walk": 3, "n": 6, "note": "", "addr": "東京都大田区山王2-2-6", "wsp": 0, "exn": 1}, {"id": "27", "name": "蒲田ニューともちん", "blk": "H", "stn": "蒲田", "stns": [{"s": "蒲田", "ex": "西口", "w": 3, "n": 5}], "ex": "西口", "walk": 3, "n": 5, "note": "", "addr": "東京都大田区西蒲田7-2-3", "wsp": 1, "exn": 1}, {"id": "31", "name": "蒲田 煮干王", "blk": "H", "stn": "蒲田", "stns": [{"s": "蒲田", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "", "addr": "東京都大田区西蒲田7-5-5", "wsp": 0, "exn": 0}, {"id": "F1", "name": "京急蒲田（FC）", "blk": "H", "stn": "京急蒲田", "stns": [{"s": "京急蒲田", "ex": "西口", "w": 3, "n": 6}], "ex": "西口", "walk": 3, "n": 6, "note": "", "addr": "東京都大田区蒲田4-18-8", "wsp": 2, "exn": 1}, {"id": "22", "name": "川崎ニューともちん", "blk": "I", "stn": "京急川崎", "stns": [{"s": "京急川崎", "ex": "中央口", "w": 4, "n": 3}, {"s": "川崎", "ex": "中央口", "w": 3, "n": 2}], "ex": "中央口", "walk": 4, "n": 5, "note": "", "addr": "神奈川県川崎市川崎区駅前本町8-19", "wsp": 1, "exn": 1}, {"id": "41", "name": "川崎西口（大宮町）", "blk": "I", "stn": "川崎", "stns": [{"s": "川崎", "ex": "中央口", "w": 7, "n": 1}], "ex": "中央口", "walk": 7, "n": 1, "note": "", "addr": "神奈川県川崎市幸区大宮町5-3", "wsp": 0, "exn": 1}, {"id": "26", "name": "元住吉なぎちゃん", "blk": "I", "stn": "元住吉", "stns": [{"s": "元住吉", "ex": "西口", "w": 5, "n": 6}], "ex": "西口", "walk": 5, "n": 6, "note": "", "addr": "神奈川県川崎市中原区木月1-33-1", "wsp": 1, "exn": 1}, {"id": "F4", "name": "菊名（FC）", "blk": "I", "stn": "菊名", "stns": [{"s": "菊名", "ex": "東口", "w": 4, "n": 4}], "ex": "東口", "walk": 4, "n": 4, "note": "", "addr": "神奈川県横浜市港北区菊名6-1-7", "wsp": 2, "exn": 2}, {"id": "32", "name": "白楽なぎちゃん", "blk": "I", "stn": "白楽", "stns": [{"s": "白楽", "ex": "西口", "w": 1, "n": 6}], "ex": "西口", "walk": 1, "n": 6, "note": "", "addr": "神奈川県横浜市神奈川区白楽100-11", "wsp": 1, "exn": 2}, {"id": "45", "name": "杉田なぎちゃん（新杉田）", "blk": "I", "stn": "新杉田", "stns": [{"s": "新杉田", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "", "addr": "神奈川県横浜市磯子区杉田1-10-4", "wsp": 0, "exn": 0}, {"id": "48", "name": "高座渋谷なぎちゃん", "blk": "I", "stn": "高座渋谷", "stns": [{"s": "高座渋谷", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "9/25オープン", "addr": "神奈川県大和市渋谷5-4-29", "wsp": 0, "exn": 0}, {"id": "49", "name": "青葉台なぎちゃん", "blk": "I", "stn": "青葉台", "stns": [{"s": "青葉台", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "10/16オープン", "addr": "神奈川県横浜市青葉区青葉台1-14-1", "wsp": 0, "exn": 0}, {"id": "3", "name": "大宮東口 凪", "blk": "J", "stn": "大宮", "stns": [{"s": "大宮", "ex": "東口", "w": 6, "n": 3}], "ex": "東口", "walk": 6, "n": 3, "note": "", "addr": "埼玉県さいたま市大宮区大門町1-24-1", "wsp": 0, "exn": 1}, {"id": "14", "name": "川口トラちゃん", "blk": "J", "stn": "川口", "stns": [{"s": "川口", "ex": "東口", "w": 6, "n": 5}], "ex": "東口", "walk": 6, "n": 5, "note": "", "addr": "埼玉県川口市栄町3-9-16", "wsp": 0, "exn": 1}, {"id": "51", "name": "川越なぎちゃん", "blk": "J", "stn": "本川越", "stns": [{"s": "本川越", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "9/16オープン", "addr": "埼玉県川越市新富町1-19-5", "wsp": 0, "exn": 0}, {"id": "24", "name": "行徳なぎちゃん", "blk": "K", "stn": "行徳", "stns": [{"s": "行徳", "ex": "中央口", "w": 1, "n": 5}], "ex": "中央口", "walk": 1, "n": 5, "note": "", "addr": "千葉県市川市行徳駅前2-3-1", "wsp": 2, "exn": 2}, {"id": "42", "name": "西船橋なぎちゃん", "blk": "K", "stn": "西船橋", "stns": [{"s": "西船橋", "ex": "北口", "w": 5, "n": 2}], "ex": "北口", "walk": 5, "n": 2, "note": "", "addr": "千葉県船橋市西船4-24-5", "wsp": 0, "exn": 1}, {"id": "50", "name": "本八幡なぎちゃん", "blk": "K", "stn": "本八幡", "stns": [{"s": "本八幡", "ex": "", "w": 5, "n": 0}], "ex": "", "walk": null, "n": 0, "note": "10/28オープン", "addr": "千葉県市川市八幡2-4-10", "wsp": 0, "exn": 0}, {"id": "39", "name": "八王子なぎちゃん", "blk": "L", "stn": "八王子", "stns": [{"s": "八王子", "ex": "北口", "w": 8, "n": 4}], "ex": "北口", "walk": 8, "n": 4, "note": "", "addr": "東京都八王子市中町8-1", "wsp": 2, "exn": 1}, {"id": "HJ", "name": "拝島なぎちゃん（存続要確認）", "blk": "L", "stn": "拝島", "stns": [{"s": "拝島", "ex": "北口", "w": 2, "n": 1}], "ex": "北口", "walk": 2, "n": 1, "note": "要確認", "addr": "", "wsp": 0, "exn": 1}], "segs": {"蒲田>大森": {"d": 3, "line": "京浜東北線", "car": "10両編成 ４、６号車", "track": "3/4番線 大宮行急行", "via": "", "n": 8, "amb": 1, "spread": 1, "fresh": 1}, "大森>田町": {"d": 11, "line": "京浜東北線", "car": "10両編成  8号車、10号車", "track": "2番線 大宮行", "via": "", "n": 7, "amb": 1, "spread": 2, "fresh": 1}, "江古田>池袋": {"d": 7, "line": "池袋線（SI線）", "car": "8両編成  1号車", "track": "2番線  池袋行き普通", "via": "", "n": 7, "amb": 0, "spread": 2, "fresh": 1}, "下北沢>渋谷": {"d": 7, "line": "井の頭線", "car": "5両編成  1号車", "track": "2番線  渋谷行き急行", "via": "", "n": 6, "amb": 1, "spread": 3, "fresh": 1}, "川口>大宮": {"d": 21, "line": "JR京浜東北線", "car": "10両編成  6号車", "track": "2番線 大宮行", "via": "", "n": 6, "amb": 1, "spread": 1, "fresh": 1}, "渋谷>虎ノ門": {"d": 8, "line": "銀座線", "car": "6両編成 5号車", "track": "1/2番線 浅草行 普通", "via": "", "n": 6, "amb": 1, "spread": 11, "fresh": 1}, "高円寺>西荻窪": {"d": 7, "line": "中央線", "car": "10両編成  4号車", "track": "3番線 青梅行 快速", "via": "", "n": 6, "amb": 1, "spread": 4, "fresh": 1}, "両国>錦糸町": {"d": 3, "line": "JR総武線", "car": "10両編成  5、8号車", "track": "2番線 千葉行 普通", "via": "", "n": 5, "amb": 1, "spread": 60, "fresh": 1}, "中野>高円寺": {"d": 2, "line": "JR総武線", "car": "10両編成 4号車", "track": "6番線 高尾行 急行", "via": "", "n": 5, "amb": 1, "spread": 2, "fresh": 1}, "大宮>川口": {"d": 22, "line": "JR京浜東北線", "car": "10両編成  4号車", "track": "1/2番線 大船行 急行", "via": "", "n": 5, "amb": 0, "spread": 2, "fresh": 0}, "本蓮沼>江古田": {"d": 38, "line": "三田線", "car": "6両編成  3号車", "track": "1番線  日吉行き普通", "via": "巣鴨 > 池袋", "n": 5, "amb": 1, "spread": 9, "fresh": 0}, "池袋>高田馬場": {"d": 4, "line": "山手線", "car": "11両編成  5号車", "track": "6番線  新宿行き 普通", "via": "", "n": 5, "amb": 1, "spread": 0, "fresh": 0}, "浅草橋>両国": {"d": 2, "line": "JR総武線", "car": "10両編成 4号車", "track": "2番線 千葉行 普通", "via": "", "n": 5, "amb": 0, "spread": 0, "fresh": 1}, "白楽>元住吉": {"d": 15, "line": "東横線", "car": "8両編成 1両目", "track": "5/6番線和光市行", "via": "", "n": 5, "amb": 1, "spread": 9, "fresh": 0}, "神田>浅草": {"d": 11, "line": "銀座線", "car": "10両編成 5両目", "track": "2番線 浅草行 普通", "via": "", "n": 5, "amb": 1, "spread": 3, "fresh": 1}, "錦糸町>新小岩": {"d": 7, "line": "JR総武線", "car": "11両編成 15両編成 3、6号車", "track": "2番線 津田沼行 普通", "via": "", "n": 5, "amb": 1, "spread": 4, "fresh": 1}, "青物横丁>京急蒲田": {"d": 6, "line": "京急線", "car": "８両編成  4号車", "track": "1番線 三崎口行 急行", "via": "", "n": 5, "amb": 1, "spread": 2, "fresh": 1}, "京急蒲田>京急川崎": {"d": 5, "line": "京急線", "car": "８両編成  4号車", "track": "1番線 京急久里浜行特急", "via": "", "n": 4, "amb": 1, "spread": 10, "fresh": 1}, "元住吉>武蔵小山": {"d": 16, "line": "目黒線", "car": "8両編成 2両目", "track": "4番線 浦和美園行普通", "via": "", "n": 4, "amb": 1, "spread": 0, "fresh": 1}, "新橋>東銀座": {"d": 1, "line": "浅草線", "car": "8両編成 4両目", "track": "2番線 京成佐倉行 急行", "via": "", "n": 4, "amb": 1, "spread": 1, "fresh": 1}, "東銀座>新橋": {"d": 1, "line": "浅草線", "car": "8両編成 6号車", "track": "1番線 西馬込行", "via": "", "n": 4, "amb": 1, "spread": 1, "fresh": 1}, "両国>浅草橋": {"d": 2, "line": "JR総武線", "car": "10両編成 1号車", "track": "1番線 三鷹沼行 普通", "via": "", "n": 3, "amb": 0, "spread": 0, "fresh": 0}, "京急川崎>白楽": {"d": 22, "line": "京急線", "car": "8両編成 2両目", "track": "4/5番線三崎口行特急", "via": "横浜", "n": 3, "amb": 1, "spread": 9, "fresh": 1}, "大久保>中野": {"d": 5, "line": "JR総武線", "car": "10両編成  8号車", "track": "1番線  三中野鷹行き普通", "via": "", "n": 3, "amb": 0, "spread": 0, "fresh": 0}, "新宿>下北沢": {"d": 7, "line": "小田急線", "car": "10両編成  4号車", "track": "4/5番線 小田原行き急行", "via": "", "n": 3, "amb": 0, "spread": 0, "fresh": 1}, "新小岩>西船橋": {"d": 14, "line": "JR総武線", "car": "10両編成 4号車", "track": "2番線 千葉行 普通", "via": "", "n": 3, "amb": 0, "spread": 0, "fresh": 1}, "新小岩>錦糸町": {"d": 7, "line": "JR総武線", "car": "10両編成 ５両目", "track": "1番線 三鷹沼行 普通", "via": "", "n": 3, "amb": 0, "spread": 1, "fresh": 0}, "新小岩>行徳": {"d": 26, "line": "JR総武線", "car": "10両編成 2号車", "track": "2番線 千葉行 普通", "via": "西船橋", "n": 3, "amb": 0, "spread": 2, "fresh": 0}, "新橋>青物横丁": {"d": 13, "line": "浅草線", "car": "8両編成 4両目", "track": "1番線 羽田行 急行", "via": "", "n": 3, "amb": 1, "spread": 2, "fresh": 1}, "武蔵小山>元住吉": {"d": 16, "line": "目黒線", "car": "6,8両編成   1号車", "track": "1/2番線  新横浜行", "via": "", "n": 3, "amb": 1, "spread": 1, "fresh": 1}, "武蔵小山>蒲田": {"d": 24, "line": "目黒線", "car": "8両編成 4両目", "track": "1/2番線 日吉行普通", "via": "多摩川", "n": 3, "amb": 0, "spread": 9, "fresh": 0}, "江古田>本蓮沼": {"d": 33, "line": "池袋線（SI線）", "car": "8両編成  8号車", "track": "2番線 池袋行", "via": "池袋 > 巣鴨", "n": 3, "amb": 0, "spread": 3, "fresh": 1}, "浅草>浅草橋": {"d": 3, "line": "浅草線", "car": "8両編成 5両目", "track": "1番線 羽田空港行急行", "via": "", "n": 3, "amb": 1, "spread": 0, "fresh": 1}, "浅草>東銀座": {"d": 12, "line": "浅草線", "car": "8両編成 8両目", "track": "1番線 久里浜行急行", "via": "", "n": 3, "amb": 1, "spread": 0, "fresh": 1}, "田町>神田": {"d": 11, "line": "山手線", "car": "10両編成 6両目", "track": "2番線 東京行普通", "via": "", "n": 3, "amb": 0, "spread": 10, "fresh": 1}, "白楽>菊名": {"d": 4, "line": "東横線", "car": "８両編成  8号車", "track": "2番線池袋行普通]", "via": "", "n": 3, "amb": 1, "spread": 0, "fresh": 1}, "虎ノ門>銀座": {"d": 7, "line": "銀座線", "car": "6両編成 6両目", "track": "2番線浅草行 普通", "via": "", "n": 3, "amb": 0, "spread": 3, "fresh": 1}, "行徳>新小岩": {"d": 29, "line": "東西線", "car": "10両編成  2号車", "track": "１番線 西船橋行普通", "via": "西船橋", "n": 3, "amb": 0, "spread": 4, "fresh": 0}, "西船橋>行徳": {"d": 8, "line": "東西線", "car": "10両編成  5、6号車", "track": "6/7番線 中野行普通", "via": "", "n": 3, "amb": 1, "spread": 0, "fresh": 1}, "西荻窪>高円寺": {"d": 6, "line": "JR中央線", "car": "10両編成 4号車", "track": "4番線 東京 急行", "via": "", "n": 3, "amb": 0, "spread": 1, "fresh": 1}, "錦糸町>両国": {"d": 3, "line": "JR総武線", "car": "10両編成 4号車", "track": "1番線 三鷹沼行 普通", "via": "", "n": 3, "amb": 0, "spread": 1, "fresh": 0}, "高円寺>中野": {"d": 2, "line": "JR中央線", "car": "10両編成  8号車", "track": "4番線 東京 急行", "via": "", "n": 3, "amb": 0, "spread": 1, "fresh": 1}, "高田馬場>新宿": {"d": 5, "line": "JR山手線", "car": "11両編成  10号車", "track": "2番線  新宿行き 普通", "via": "", "n": 3, "amb": 0, "spread": 0, "fresh": 0}, "三田>青物横丁": {"d": 8, "line": "1番線 羽田空港行", "car": "", "track": "※※ 確認 ※※ 乗車位置 後部", "via": "", "n": 2, "amb": 0, "spread": 0, "fresh": 0}, "中野>大久保": {"d": 4, "line": "JR総武線", "car": "10両編成 4号車", "track": "5番線  千葉行き 普通", "via": "", "n": 2, "amb": 0, "spread": 0, "fresh": 1}, "京急蒲田>青物横丁": {"d": 6, "line": "京急線", "car": "8両編成  5号車", "track": "4番線  成田行き 急行", "via": "", "n": 2, "amb": 0, "spread": 0, "fresh": 0}, "元住吉>菊名": {"d": 8, "line": "東横線 各停", "car": "８両編成  8号車", "track": "2番線 元町中華街行", "via": "", "n": 2, "amb": 0, "spread": 0, "fresh": 1}, "八王子>西荻窪": {"d": 34, "line": "JR中央線", "car": "10両編成 4号車", "track": "2番線 東京 急行", "via": "", "n": 2, "amb": 0, "spread": 0, "fresh": 1}, "川口>赤羽駅": {"d": 9, "line": "JR京浜東北線", "car": "10両編成  6号車", "track": "1/2番線 大宮行急行", "via": "", "n": 2, "amb": 0, "spread": 11, "fresh": 0}, "川口>赤羽": {"d": 4, "line": "京浜東北線", "car": "10両編成  6号車", "track": "1/2番線 大宮行", "via": "", "n": 2, "amb": 0, "spread": 0, "fresh": 0}, "川崎>蒲田": {"d": 5, "line": "京浜東北線", "car": "10両編成 4両目", "track": "4番線 大宮行急行", "via": "", "n": 2, "amb": 1, "spread": 0, "fresh": 1}, "川崎>白楽": {"d": 26, "line": "京急線", "car": "8両編成 2両目", "track": "4/5番線 金沢文庫行 急行", "via": "横浜", "n": 2, "amb": 0, "spread": 2, "fresh": 0}, "本蓮沼>駒込": {"d": 16, "line": "三田線 各停", "car": "8両編成 5，7号車\n6両編成 4，6号車", "track": "1番線 日吉行", "via": "巣鴨", "n": 2, "amb": 0, "spread": 0, "fresh": 1}, "池袋>江古田": {"d": 6, "line": "池袋線 各停", "car": "8両編成 ５，7号車", "track": "3番線 保谷行", "via": "", "n": 2, "amb": 1, "spread": 1, "fresh": 1}, "渋谷>下北沢": {"d": 5, "line": "井の頭線", "car": "5両編成 3号車", "track": "1/2番線 吉祥寺行き", "via": "", "n": 2, "amb": 0, "spread": 1, "fresh": 1}, "田町>新橋": {"d": 4, "line": "山手線", "car": "10両編成 6両目", "track": "2番線 東京行普通", "via": "", "n": 2, "amb": 1, "spread": 1, "fresh": 1}, "神保町>神田": {"d": 12, "line": "半蔵門線", "car": "10両編成 1号車", "track": "6番線 押上行", "via": "三越前", "n": 2, "amb": 0, "spread": 4, "fresh": 0}, "神田>銀座": {"d": 6, "line": "銀座線", "car": "6両編成 5両目", "track": "2番線渋谷行 普通", "via": "", "n": 2, "amb": 1, "spread": 1, "fresh": 1}, "菊名>白楽": {"d": 4, "line": "東横線 各停", "car": "8両編成 5号車", "track": "3/4番線 元町中華街行", "via": "", "n": 2, "amb": 1, "spread": 0, "fresh": 1}, "虎ノ門>神田": {"d": 10, "line": "銀座線", "car": "6両編成  1号車", "track": "2番線 普通", "via": "", "n": 2, "amb": 1, "spread": 0, "fresh": 1}, "行徳>神保町": {"d": 37, "line": "東西線", "car": "10両編成  2号車", "track": "2番線  三鷹行き 普通", "via": "九段下", "n": 2, "amb": 0, "spread": 2, "fresh": 1}, "西荻窪>拝島": {"d": 42, "line": "中央線", "car": "10両編成 6号車", "track": "3番線 青梅行 快速", "via": "", "n": 2, "amb": 0, "spread": 4, "fresh": 1}, "西荻窪>下北沢": {"d": 24, "line": "中央線", "car": "10両編成  6号車", "track": "3番線 立川行き", "via": "吉祥寺", "n": 2, "amb": 0, "spread": 0, "fresh": 0}, "赤羽>川口": {"d": 3, "line": "京浜東北線", "car": "10両編成  6号車", "track": "1/2番線 大宮行 急行", "via": "", "n": 2, "amb": 0, "spread": 0, "fresh": 1}, "銀座>八王子": {"d": 72, "line": "丸ノ内線", "car": "6両編成 1号車", "track": "3番線 中目黒行 普通", "via": "四ツ谷", "n": 2, "amb": 0, "spread": 0, "fresh": 1}, "青物横丁>新橋": {"d": 14, "line": "京急線", "car": "8両編成  ５号車", "track": "2番線  成田行き 急行", "via": "", "n": 2, "amb": 0, "spread": 1, "fresh": 0}, "高田馬場>池袋": {"d": 4, "line": "山手線", "car": "11両編成 2号車", "track": "1番線 池袋・上野方面", "via": "", "n": 2, "amb": 1, "spread": 0, "fresh": 1}, "高田馬場>神保町": {"d": 13, "line": "東西線", "car": "10両編成 2号車", "track": "１番線 西船橋行普通", "via": "九段下", "n": 2, "amb": 0, "spread": 1, "fresh": 0}, "三田>東銀座": {"d": 6, "line": "浅草線", "car": "8両編成 1両目", "track": "2番線 印旛日本医大行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "下北>渋谷": {"d": 4, "line": "井の頭線", "car": "5両編成 5号車", "track": "2番線 急行 渋谷行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "下北沢>新宿": {"d": 8, "line": "小田急線", "car": "10両編成  4号車", "track": "2番線  新宿行き", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "下北沢>西荻窪": {"d": 21, "line": "1番線 吉祥寺 (急行)", "car": "", "track": "※※ 確認 ※※", "via": "吉祥寺", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "両国>神保町": {"d": 11, "line": "三田線 各停", "car": "6,8両編成   1号車", "track": "4番線 にしたかしま行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "両国>新小岩": {"d": 10, "line": "総武線", "car": "10両編成 6号車", "track": "2番線 千葉行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "中野>東銀座": {"d": 32, "line": "5番線 西船橋行", "car": "", "track": "10両編成 1号車", "via": "日本橋", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "九段下>高田馬場": {"d": 9, "line": "2番線 三鷹行", "car": "", "track": "10両編成10号車", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "五反田>田町": {"d": 10, "line": "山手線", "car": "10両編成 8両目", "track": "2番線 品川 普通", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "五反田>武蔵小山": {"d": 14, "line": "山手線", "car": "11両編成  10号車", "track": "2番線 新宿行普通", "via": "目黒", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "京急川崎>京急蒲田": {"d": 3, "line": "6/7番線 品川行", "car": "", "track": "後部", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "京急蒲田>川崎": {"d": 4, "line": "京急線", "car": "８両編成  4号車", "track": "1番線 逗子葉山行急行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "京急蒲田>新橋": {"d": 2, "line": "京急線", "car": "8両編成  1号車", "track": "２番線  成田行き急行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "元住吉>白楽": {"d": 16, "line": "東横線", "car": "8両編成 5両目", "track": "2番線 元町行 普通", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "元住吉>武蔵小杉": {"d": 17, "line": "4番線 西高島平行", "car": "", "track": "", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "元住吉>川崎": {"d": 21, "line": "5番線 渋谷行", "car": "", "track": "8両編成 3両目", "via": "武蔵小杉", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "八王子>高田馬場": {"d": 56, "line": "JR中央線", "car": "10両編成 10両目", "track": "2番線 東京行", "via": "四ツ谷駅", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "八王子>新宿": {"d": 37, "line": "JR中央線", "car": "10両編成 8両目", "track": "2番線 東京行 中央特快", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "内幸町>三田": {"d": 5, "line": "1番線 武蔵小山行", "car": "", "track": "6両編成 2or4号車", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "大宮>浅草": {"d": 39, "line": "宇都宮線", "car": "10両編成 1号車", "track": "4番線 平塚行 普通", "via": "上野", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "大宮>行徳": {"d": 78, "line": "1/2番線 大船行", "car": "", "track": "※※ 確認 ※※", "via": "南浦和 > 西船橋", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "大森>川崎": {"d": 8, "line": "京浜東北線", "car": "10両編成 5両目", "track": "1番線 磯子行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "大森>蒲田": {"d": 4, "line": "1番線 大船行", "car": "", "track": "※※ 確認 ※※", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "小川町>神保町": {"d": 2, "line": "3番線 橋本行", "car": "", "track": "10両編成6号車", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "拝島>八王子": {"d": 15, "line": "JR八高線", "car": "10両編成  1号車", "track": "5番線 八王子行 普通", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "新宿>下北": {"d": 8, "line": "小田急線", "car": "", "track": "4/5番線 急行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "新宿>東高円寺": {"d": 8, "line": "丸ノ内線", "car": "6両編成  3号車", "track": "1番線荻窪行き 普通", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "新宿三丁目>銀座": {"d": 14, "line": "2番線", "car": "", "track": "6両編成10号車", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "新橋>浅草橋": {"d": 11, "line": "浅草線", "car": "8両編成  2号車、5号車", "track": "2番線 印旛日本医大行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "新橋>浅草": {"d": 13, "line": "浅草線", "car": "8両編成  5号車", "track": "1番線 羽田行 急行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "新橋>虎ノ門": {"d": 1, "line": "1番線 渋谷行", "car": "", "track": "6両編成 5号車", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "本蓮沼>高田馬場": {"d": 27, "line": "三田線", "car": "6両編成  3号車", "track": "1番線  白金高輪行き普通", "via": "巣鴨", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "東銀座>五反田": {"d": 13, "line": "浅草線", "car": "8両編成  7号車", "track": "1番線 西馬込行 普通", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "東銀座>錦糸町": {"d": 24, "line": "浅草線", "car": "8両編成 ２両目", "track": "2番線 押上行", "via": "浅草橋", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "東銀座>本蓮沼": {"d": 32, "line": "日比谷線", "car": "7両編成 6号車", "track": "3番線 中目黒行 普通", "via": "日比谷", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "東銀座>神保町": {"d": 12, "line": "日比谷線", "car": "7両編成 6号車", "track": "3番線 中目黒行", "via": "日比谷", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "東高円寺>高円寺": {"d": 9, "line": "丸の内線", "car": "10両編成 4号車、6号車", "track": "1番線 荻窪行", "via": "荻窪", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "東高円寺駅前>中野三丁目": {"d": 4, "line": "玉35", "car": "バス乗り場注意", "track": "2番線  中野行き", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "武蔵小山>五反田": {"d": 10, "line": "目黒線", "car": "8両編成 2両目", "track": "3/4番線 西高島平行普通", "via": "目黒", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "武蔵小杉>渋谷": {"d": 14, "line": "3/4番線 西高島平行", "car": "", "track": "※※ 確認 ※※ 乗車位置 後部 中間部", "via": "目黒", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "池袋>川口": {"d": 20, "line": "JR埼京線", "car": "10両編成  7号車", "track": "4番線 武蔵浦和行 普通", "via": "赤羽", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "池袋>本蓮沼": {"d": 11, "line": "7番線 東京行", "car": "", "track": "6or 8号車", "via": "巣鴨", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "浅草>神田": {"d": 11, "line": "渋谷行", "car": "", "track": "6両編成1号車", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "浅草橋>東銀座": {"d": 9, "line": "浅草線", "car": "8両編成  4号車", "track": "1番線  西馬込行き普通", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "浅草橋>川口": {"d": 27, "line": "JR総武線", "car": "10両編成  6号車", "track": "1番線 三鷹行 普通", "via": "秋葉原", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "浅草橋>浅草": {"d": 3, "line": "2番線 京成佐倉行", "car": "", "track": "8両編成8号車", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "渋谷>武蔵小山": {"d": 15, "line": "JR山手線", "car": "11両編成  10号車", "track": "2番線 品川行 普通", "via": "目黒", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "白楽>京急川崎": {"d": 24, "line": "東横線 各停", "car": "10両編成 3,6号車\n8両編成 2,5号車", "track": "1番線 元町中華街行", "via": "横浜", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "白楽>青物横丁": {"d": 33, "line": "東横線", "car": "8両編成 1両目", "track": "2番線元町中華街行普通", "via": "横浜", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "白楽>川崎": {"d": 24, "line": "京浜東北線", "car": "10両編成 6両目", "track": "1番線 元町行 急行", "via": "横浜", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "神保町>武蔵小山": {"d": 26, "line": "三田線", "car": "", "track": "3番線 日吉行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "神保町>高田馬場": {"d": 14, "line": "新宿線", "car": "10両編成 5号車", "track": "1番線 笹塚行普通", "via": "九段下", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "神保町>本蓮沼": {"d": 19, "line": "三田線", "car": "6両編成 3号車", "track": "4番線 西高島平行普通", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "神保町>行徳": {"d": 32, "line": "東西線", "car": "10両編成  9号車", "track": "1番線  橋本行き 普通", "via": "九段下", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "神保町>東銀座": {"d": 10, "line": "三田線", "car": "6両編成  6号車", "track": "3番線  白金高輪行き普通", "via": "日比谷", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "神保町>京急蒲田": {"d": 31, "line": "三田線", "car": "８両編成８号車", "track": "3番線  海老名行き 急行", "via": "三田", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "神田>川口": {"d": 30, "line": "銀座線", "car": "6両編成  ６号車", "track": "2番線 浅草線行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "菊名>元住吉": {"d": 8, "line": "東横線", "car": "8両編成 1両目", "track": "5/6番線 石神井公園行普通", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "虎ノ門>表参道": {"d": 10, "line": "銀座線", "car": "6両編成  1号車", "track": "1番線 渋谷行き 普通", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "虎ノ門>下北沢": {"d": 23, "line": "銀座線", "car": "6両編成  1号車", "track": "1番線 渋谷行き 普通", "via": "渋谷", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "虎ノ門>東銀座": {"d": 3, "line": "日比谷線", "car": "7両編成  3号車", "track": "2番線 北千住行き", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "行徳>高田馬場": {"d": 39, "line": "東西線 各停", "car": "10両編成 10号車", "track": "2番線 中野行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "行徳>京急蒲田": {"d": 58, "line": "東西線", "car": "10両編成  1号車", "track": "2番線  中野行き 普通", "via": "日本橋", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "行徳>東銀座": {"d": 28, "line": "東西線", "car": "10両編成 1号車", "track": "2番線 三鷹行", "via": "日本橋", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "行徳>新橋": {"d": 32, "line": "2番線 三鷹行", "car": "", "track": "10両編成 6号車", "via": "日本橋", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "西荻窪>八王子": {"d": 37, "line": "JR中央線", "car": "10両編成 6号車", "track": "3番線 高尾行 各駅", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "西荻窪>神田": {"d": 25, "line": "JR中央線", "car": "10両編成 2号車", "track": "4番線 東京行 急行", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "銀座>虎ノ門": {"d": 4, "line": "銀座線", "car": "6両編成  5号車", "track": "1番線 渋谷行き 普通", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "錦糸町>青物横丁": {"d": 27, "line": "横須賀線", "car": "15両編成 4両目", "track": "3番線 大船行", "via": "品川", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "青物横丁>大森": {"d": 15, "line": "2番線 品川行", "car": "", "track": "※※ 確認 ※※ 乗車位置 中間部", "via": "品川", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "青物横丁>神保町": {"d": 24, "line": "2番線 青砥行", "car": "", "track": "8両編成 8両目", "via": "三田", "n": 1, "amb": 0, "spread": 0, "fresh": 0}, "駒込>川口": {"d": 16, "line": "山手線", "car": "11両編成  4、６、10、11号車", "track": "1番線 上野東京方面", "via": "田端", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "高田馬場>江古田": {"d": 19, "line": "JR山手線", "car": "11両編成  2号車", "track": "1番線  池袋、上野方面", "via": "池袋", "n": 1, "amb": 0, "spread": 0, "fresh": 1}, "高田馬場>西武新宿": {"d": 2, "line": "5番線 西武新宿行", "car": "", "track": "10両編成10号車", "via": "", "n": 1, "amb": 0, "spread": 0, "fresh": 0}}, "blocks": {"A": "都心（銀座・新橋・虎ノ門）", "B": "神田・神保町・浅草橋", "C": "城東（両国・錦糸町・浅草・新小岩）", "D": "新宿・高田馬場", "E": "中央線（中野〜西荻窪）", "F": "池袋・城北", "G": "渋谷・世田谷", "H": "品川・大田", "I": "川崎・横浜", "J": "埼玉", "K": "千葉", "L": "多摩"}};
-const S = DATA.stores, SEG = DATA.segs, BL = DATA.blocks;
-const EVL = {rest:{n:"休憩",m:30},quiz:{n:"質問タイム（車内）",m:0},jan:{n:"シェアじゃんけん",m:5}};
-let courses = [{name:"1日目 A班",date:"2026-08-26",start:"09:00",items:[]}];
-let ci = 0;
-let OV = {stn:{},seg:{},pair:{},extra:{},news:[],hide:{}};
-function ST(){return S.concat(OV.news||[])}
-const C = ()=>courses[ci];
+/* ============ 投稿の種類 ============ */
+const TYPES = {
+  thanks: { icon: "🧡", label: "ありがとう", color: C.plum, ph: "誰に・何にありがとう？ ひと言でOK" },
+  memo:   { icon: "📝", label: "メモ",       color: C.amberDark, ph: "思いついたこと、気づいたこと" },
+  diary:  { icon: "📔", label: "日記",       color: C.greenDark, ph: "いま起きたこと、感じたこと" },
+};
 
-function n(id){return parseInt(document.getElementById(id).value)||0}
-function t2m(s){const p=String(s).split(":");return (+p[0])*60+(+p[1]||0)}
-function m2t(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
-function st(id){return ST().find(x=>x.id===id)}
-function esc(s){return String(s==null?"":s).replace(/"/g,"&quot;")}
+const PROMPTS = [
+  "今日、誰かに優しくできた？","感情的にならずにいられた？","今日いちばん笑ったのはいつ？",
+  "誰かの話を最後まで聴けた？","自分に正直でいられた？","今日、小さな挑戦をした？",
+  "誰かの良いところを見つけた？","「ありがとう」をちゃんと言葉にできた？","今日の自分を褒めるなら？",
+  "無理してなかった？","誰かを助けたり、助けられたりした？","今日、心が動いた瞬間は？",
+  "明日の自分に残したい気持ちは？","今日、手放せたこと・許せたことは？",
+];
+const promptFor = (k) => {
+  const d = fromKey(k);
+  const doy = Math.floor((d - new Date(d.getFullYear(),0,0)) / 86400000);
+  return PROMPTS[doy % PROMPTS.length];
+};
 
-/* ---- 駅の候補 ---- */
-function opts(s){
-  const hide=((OV.hide||{})[s.id])||[];
-  let base=s.stns.map(o=>({...o,p:(o.s===s.stn)?1:0}));
-  base=base.filter(o=>!hide.includes(o.s));
-  if(!base.length)base=s.stns.map(o=>({...o,p:1}));
-  (OV.extra[s.id]||[]).forEach(x=>{if(!base.some(o=>o.s===x))base.push({s:x,ex:"",w:5,n:0,p:0})});
-  return base.map(o=>{const k=s.id+"|"+o.s,ov=OV.stn[k]||{};
-    return {s:o.s,ex:ov.ex!=null?ov.ex:o.ex,w:ov.w!=null?ov.w:o.w,n:o.n,p:o.p||0}});
-}
-function opt(s,name){const L=opts(s);return L.find(o=>o.s===name)||L[0]}
-function addStn(id,x){x=(x||"").trim().replace(/駅$/,"");
-  if(!x){render();return}
-  const cur=OV.extra[id]||[];
-  if(!cur.includes(x)&&!st(id).stns.some(o=>o.s===x)){OV.extra[id]=cur.concat([x])}
-  say("「"+x+"」を "+st(id).name+" の候補に追加しました");render()}
-function delStn(id,x){
-  OV.extra[id]=(OV.extra[id]||[]).filter(v=>v!==x);
-  OV.hide=OV.hide||{};
-  if(st(id).stns.some(o=>o.s===x))OV.hide[id]=(OV.hide[id]||[]).concat([x]);
-  say("「"+x+"」を候補から外しました");render()}
-function unhideStn(id){OV.hide=OV.hide||{};delete OV.hide[id];
-  say("外した駅を戻しました");render()}
-function setStn(id,stn,f,x){const k=id+"|"+stn;OV.stn[k]=OV.stn[k]||{};
-  OV.stn[k][f]=(f==="w")?(parseInt(x)||0):x;render()}
-function setSeg(k,f,x){OV.seg[k]=OV.seg[k]||{};OV.seg[k][f]=(f==="d")?(parseInt(x)||0):x;render()}
-function setPair(k,x){OV.pair[k]=parseInt(x)||0;render()}
-function setEv(i,f,x){C().items[i][f]=(f==="min")?(parseInt(x)||0):x;render()}
-function setC(f,x){C()[f]=x;render()}
-function setLeg(i,f,x){C().items[i][f]=(x==="")?null:x;render()}
-function normT(x){
-  x=String(x||"").trim();
-  if(!x)return null;
-  let m=x.match(/^(\d{1,2})\s*[:：.時]\s*(\d{1,2})/);
-  if(!m){const d=x.replace(/\D/g,"");
-    if(d.length===3)m=[0,d[0],d.slice(1)];
-    else if(d.length===4)m=[0,d.slice(0,2),d.slice(2)];
-    else return null}
-  const hh=+m[1],mm=+m[2];
-  if(hh>29||mm>59)return null;
-  return String(hh%24).padStart(2,"0")+":"+String(mm).padStart(2,"0");
-}
-function setLegT(i,f,x){
-  const v=normT(x);
-  if(x&&String(x).trim()&&!v){say("時刻を読み取れません。9:17 のように入力してください。");render();return}
-  C().items[i][f]=v;
-  if(f==="dept"&&!v)C().items[i].arrt=null;
-  render();
-}
-function clearT(i){C().items[i].dept=null;C().items[i].arrt=null;render();
-  say("この区間の時刻を自動計算に戻しました")}
-function setMode(i,m){C().items[i].mode=m||null;
-  if(m==="train"){C().items[i].dep=null;C().items[i].arr=null}
-  render();
-  say(m==="train"?"この区間を電車に切り替えました":
-      m==="walk"?"この区間を徒歩に切り替えました":"この区間を自動に戻しました")}
-function modeBtn(idx,mode){
-  const b=(m,t)=>'<button class="mini'+((mode||null)===m?" onmode":"")+
-    '" onclick="setMode('+idx+','+(m===null?"null":"'"+m+"'")+')">'+t+'</button>';
-  return '<span class="modesw">'+b(null,"自動")+b("train","電車")+b("walk","徒歩")+'</span>';
-}
+const MOODS = ["😄","🙂","😐","😮‍💨","😢"];
+const MOOD_VAL = { "😄":5, "🙂":4, "😐":3, "😮‍💨":2, "😢":1 };
+const moodEmojiFor = (v) => v>=4.5?"😄":v>=3.5?"🙂":v>=2.5?"😐":v>=1.5?"😮‍💨":"😢";
+const habitFreq = (h) => h.freq || "daily";
 
-function rawLeg(a,b){
-  const k=a+">"+b,r=b+">"+a;let g;
-  if(SEG[k])g={...SEG[k],key:k,rev:false};
-  else if(SEG[r])g={...SEG[r],car:"",track:"",key:k,rev:true};
-  else g={d:20,line:"",track:"",car:"",via:"",n:0,key:k,rev:false,none:true};
-  const o=OV.seg[k];
-  if(o){if(o.d!=null){g.d=o.d;g.none=false;g.fixed=true}if(o.car!=null){g.car=o.car;g.fixed=true}}
-  return g;
-}
-/* 出発駅・到着駅の最適な組み合わせを選ぶ */
-function pick(prev,cur,forceDep,forceArr,BUF,SAME,mode,pairW){
-  const AL=opts(prev),BL2=opts(cur);
-  let A=AL.filter(o=>!forceDep||o.s===forceDep); if(!A.length)A=AL;
-  let B=BL2.filter(o=>!forceArr||o.s===forceArr); if(!B.length)B=BL2;
-  const walks=[],trains=[];
-  A.forEach(a=>B.forEach(b=>{
-    if(a.s===b.s){walks.push({walkOnly:true,a:a,b:b,cost:(pairW!=null?pairW:SAME)})}
-    else{const g=rawLeg(a.s,b.s);
-      trains.push({walkOnly:false,a:a,b:b,g:g,
-        cost:a.w+BUF+g.d+b.w+(g.none?25:0)+((a.p||a.n>=2)?0:8)+((b.p||b.n>=2)?0:8)})}
-  }));
-  const mn=L=>L.reduce((m,x)=>(!m||x.cost<m.cost)?x:m,null);
-  if(mode==="train"&&trains.length)return mn(trains);
-  if(mode==="walk"&&walks.length)return mn(walks);
-  return mn(walks.concat(trains));
-}
-function selHTML(store,cur,idx,field){
-  const L=opts(store),key=idx+"|"+field,open=EDIT.has(key);
-  let s='<select class="stnsel" onchange="setLeg('+idx+',\''+field+'\',this.value)">'+
-    '<option value="">自動（'+cur+'）</option>'+
-    L.map(o=>'<option value="'+esc(o.s)+'"'+(C().items[idx][field]===o.s?' selected':'')+'>'+
-      o.s+'（徒歩'+o.w+'分'+(o.n?'':'・推定')+'）</option>').join("")+'</select>';
-  s+=' <button class="mini'+(open?' onmode':'')+'" onclick="tgEdit(\''+key+'\')" title="駅の候補を編集">駅⋯</button>';
-  if(open){
-    s+='<div class="stnedit"><input class="ed stnadd" placeholder="＋駅を追加" value="" '+
-      'onchange="addStn(\''+store.id+'\',this.value)">'+
-      ' <button class="mini" onclick="delStn(\''+store.id+'\',\''+esc(cur)+'\')">「'+cur+'」を外す</button>'+
-      (((OV.hide||{})[store.id]||[]).length?
-        ' <button class="mini" onclick="unhideStn(\''+store.id+'\')">外した駅を戻す</button>':'')+'</div>';
-  }
-  return s;
-}
-const EDIT=new Set();
-function tgEdit(k){EDIT.has(k)?EDIT.delete(k):EDIT.add(k);render()}
+/* ============ 保存（端末） ============ */
+const LS = "hitohi:v4";
+const LS_URL = "hitohi:gasUrl";
 
-function add(id){C().items.push({type:"stop",id:id,dep:null,arr:null});render()}
-function addEv(t){C().items.push({type:t,min:EVL[t].m,label:EVL[t].n});render()}
-function clearAll(){C().items=[];render()}
-function rm(i){C().items.splice(i,1);render()}
-
-function tabs(){
-  const el=document.getElementById("tabs");el.innerHTML="";
-  courses.forEach((c,i)=>{const b=document.createElement("button");
-    b.className="tab"+(i===ci?" on":"");
-    b.textContent=c.name+"（"+c.items.filter(x=>x.type==="stop").length+"）";
-    b.onclick=()=>{ci=i;render()};el.appendChild(b)});
-  const a=document.createElement("button");a.className="tab add";a.textContent="＋ コースを追加";
-  a.onclick=addC;el.appendChild(a);
-}
-function addC(){courses.push({name:"新しいコース",date:C().date,start:"09:00",items:[]});ci=courses.length-1;render()}
-let delArm=false;
-function delC(){
-  if(courses.length<2){say("最後の1コースは削除できません。");return}
-  if(!delArm){delArm=true;render();say("もう一度押すと「"+C().name+"」を削除します");
-    setTimeout(()=>{delArm=false;render()},5000);return}
-  const nm=C().name;courses.splice(ci,1);ci=Math.max(0,ci-1);delArm=false;render();
-  say("「"+nm+"」を削除しました")}
-function say(m){const e=document.getElementById("msg");if(!e)return;
-  e.textContent=m;e.style.display="block";clearTimeout(window._mt);
-  window._mt=setTimeout(()=>{e.style.display="none"},4000)}
-
-let dragI=null;
-function dnd(li,i){
-  li.draggable=true;
-  li.ondragstart=e=>{dragI=i;li.classList.add("drag");e.dataTransfer.effectAllowed="move"};
-  li.ondragend=()=>{li.classList.remove("drag");
-    document.querySelectorAll(".stops li").forEach(x=>x.classList.remove("over"))};
-  li.ondragover=e=>{e.preventDefault();li.classList.add("over")};
-  li.ondragleave=()=>li.classList.remove("over");
-  li.ondrop=e=>{e.preventDefault();li.classList.remove("over");
-    if(dragI===null||dragI===i)return;
-    const it=C().items.splice(dragI,1)[0];C().items.splice(i,0,it);dragI=null;render()};
-}
-function buildPicker(){
-  const el=document.getElementById("picker");
-  const q=(document.getElementById("q").value||"").trim();
-  const hint=document.getElementById("qhint");
-  if(q){
-    const hits=ST().filter(s=>s.name.includes(q)||s.stns.some(o=>o.s.includes(q))||
-      (BL[s.blk]||"").includes(q)||s.blk===q.toUpperCase());
-    hint.textContent=hits.length? hits.length+"件見つかりました" : "見つかりませんでした。別の言葉で試してください。";
-    newList();
-    el.innerHTML=hits.map(s=>'<div class="hit"><button onclick="add(\''+s.id+'\')">＋</button><span>'+
-      s.name+'</span><span class="tag">'+s.blk+'／'+s.stns.map(o=>o.s).join("/")+'</span></div>').join("");
-    return;
-  }
-  hint.textContent="ブロック名をクリックすると店舗が開きます。検索したほうが速いです。";
-  el.innerHTML="";
-  Object.keys(BL).forEach(k=>{
-    const list=ST().filter(s=>s.blk===k);if(!list.length)return;
-    const d=document.createElement("div");d.className="blk";
-    d.innerHTML='<div class="blkhead"><span>'+k+'　'+BL[k]+'</span><span>'+list.length+'店 ▾</span></div>'+
-      '<div class="blkbody">'+list.map(s=>'<div class="sitem"><button onclick="add(\''+s.id+
-      '\')">＋</button><span>'+s.name+'</span><span class="tag">'+
-      s.stns.map(o=>o.s).join("/")+'</span></div>').join("")+'</div>';
-    d.querySelector(".blkhead").onclick=()=>d.classList.toggle("open");
-    if(k==="A")d.classList.add("open");
-    el.appendChild(d);
-  });
-  newList();
-}
-
-function tp(c){const d=(c.date||"2026-08-26").split("-");return{y:d[0],m:d[1],d:d[2]}}
-function yahoo(c,a,b,mins){const p=tp(c),hh=String(Math.floor(mins/60)).padStart(2,"0"),
-  mm=String(mins%60).padStart(2,"0");
-  return "https://transit.yahoo.co.jp/search/result?from="+encodeURIComponent(a)+"&to="+encodeURIComponent(b)+
-    "&y="+p.y+"&m="+p.m+"&d="+p.d+"&hh="+hh+"&m1="+mm[0]+"&m2="+mm[1]+"&type=1"}
-function gmap(a,b,mode){return "https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(a)+
-  "&destination="+encodeURIComponent(b)+"&travelmode="+mode}
-function wada(s){return "https://wadattsu261.com/?s="+encodeURIComponent(s)}
-function loc(s){return s.addr?s.addr:s.stn+"駅"}
-function chk(u,t,c){return ' <a class="chk'+(c?" "+c:"")+'" href="'+u+'" target="_blank" rel="noopener">'+t+'</a>'}
-
-function calc(c){
-  let cur=t2m(c.start||"09:00");
-  const INSP=n("insp"),BUF=n("buf"),SAME=n("same"),CL=n("close");
-  const out=[];let prev=null,prevIdx=-1;
-  c.items.forEach((it,idx)=>{
-    if(it.type!=="stop"){out.push({k:"ev",idx:idx,t:cur,min:it.min||0,label:it.label,type:it.type});
-      cur+=(it.min||0);return}
-    const s=st(it.id);
-    if(!s)return;
-    if(prev){
-      const pkey=prev.id+"|"+s.id;
-      const P=pick(prev,s,c.items[prevIdx].dep,it.arr,BUF,SAME,it.mode,OV.pair[pkey]);
-      if(P.walkOnly){
-        const w=OV.pair[pkey]!=null?OV.pair[pkey]:SAME;
-        out.push({k:"pair",a:prev,b:s,w:w,key:pkey,ai:prevIdx,bi:idx,idx:idx,sa:P.a,sb:P.b,mode:it.mode});cur+=w;
-      }else{
-        cur+=P.a.w;const atStn=cur;
-        const fd=it.dept?t2m(it.dept):null, fa=it.arrt?t2m(it.arrt):null;
-        const dep=(fd!=null)?fd:atStn+BUF;
-        const dur=(fa!=null)?Math.max(1,fa-dep):P.g.d;
-        const arr=dep+dur;
-        out.push({k:"train",a:prev,b:s,ai:prevIdx,bi:idx,idx:idx,sa:P.a,sb:P.b,g:P.g,
-          atStn:atStn,dep:dep,arr:arr,dur:dur,wait:dep-atStn,
-          fd:(fd!=null),fa:(fa!=null),mode:it.mode});
-        cur=arr+P.b.w;
+function migrate_() {
+  // 旧バージョン（v2/v3）の記録を「流れ」に引っ越し
+  const posts = [], days = {}, weeks = {};
+  let habits = [], wishlist = [];
+  const push = (date, type, text, photo, order) => {
+    if (!text && !photo) return;
+    const d = fromKey(date);
+    d.setHours(21, order || 0, 0, 0);
+    posts.push({ id: `p${d.getTime()}${Math.random().toString(36).slice(2,6)}`, ts: d.toISOString(), date, type, text: text || "", photo: photo || null });
+  };
+  try {
+    const v3 = JSON.parse(localStorage.getItem("hitohi:v3") || "null");
+    if (v3) {
+      Object.values(v3.entries || {}).forEach((e) => {
+        push(e.date, "diary", e.diary, e.photo, 1);
+        push(e.date, "thanks", e.gratitude, null, 2);
+        if (e.promptAnswer) push(e.date, "diary", `「${promptFor(e.date)}」→ ${e.promptAnswer}`, null, 3);
+        days[e.date] = { mood: e.mood || null, habitChecks: e.habitChecks || {} };
+      });
+      Object.values(v3.weeks || {}).forEach((w) => { weeks[w.mondayKey] = w; });
+      habits = v3.habits || []; wishlist = v3.wishlist || [];
+    } else {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith("hitohi:")) continue;
+        let v; try { v = JSON.parse(localStorage.getItem(k)); } catch (e) { continue; }
+        if (k.startsWith("hitohi:entry:")) {
+          const date = k.slice(13);
+          push(date, "diary", v.diary, v.photo, 1);
+          push(date, "thanks", v.gratitude, null, 2);
+          if (v.promptAnswer) push(date, "diary", `「${promptFor(date)}」→ ${v.promptAnswer}`, null, 3);
+          days[date] = { mood: v.mood || null, habitChecks: v.habitChecks || {} };
+        } else if (k === "hitohi:habits") habits = v || [];
+        else if (k === "hitohi:wishlist") wishlist = v || [];
+        else if (k.startsWith("hitohi:weekgoal:")) {
+          const m = k.slice(16);
+          weeks[m] = { ...(weeks[m]||{mondayKey:m}), goalText: (v&&v.text)||"", goalAchieved: !!(v&&v.achieved) };
+        } else if (k.startsWith("hitohi:review:")) {
+          const m = k.slice(14);
+          weeks[m] = { ...(weeks[m]||{mondayKey:m}), wins:(v&&v.wins)||"", insight:(v&&v.insight)||"", nextWeek:(v&&v.nextWeek)||"" };
+        }
       }
-      out.push({k:"stop",s:s,idx:idx,stn:P.b,a:cur,b:cur+INSP,c:cur-CL});
-    }else{
-      const first=opt(s,it.arr);
-      out.push({k:"stop",s:s,idx:idx,stn:first,a:cur,b:cur+INSP,c:cur-CL});
     }
-    cur+=INSP;prev=s;prevIdx=idx;
-  });
-  return {rows:out,end:cur};
+  } catch (e) {}
+  posts.sort((a,b) => (a.ts < b.ts ? 1 : -1));
+  return { posts, days, weeks, habits, wishlist, synced: {} };
 }
 
-function render(){
-  tabs();
-  document.getElementById("cname").value=C().name;
-  document.getElementById("cdate").value=C().date;
-  document.getElementById("cstart").value=C().start;
-  const db=document.getElementById("delbtn");
-  if(db){db.textContent=delArm?"もう一度押すと削除されます":"このコースを削除";
-    db.style.color=delArm?"#C0392B":"";db.style.borderColor=delArm?"#C0392B":""}
-  const ul=document.getElementById("stops");ul.innerHTML="";
-  C().items.forEach((it,i)=>{
-    const li=document.createElement("li");
-    if(it.type==="stop"){const s=st(it.id);
-      if(!s){li.className="ev";li.innerHTML='<span class="grip">⠿</span><span class="ord">'+(i+1)+
-        '</span><span class="nm">（削除された店舗）</span>';
-        li.innerHTML+='<button class="mini" onclick="rm('+i+')">×</button>';ul.appendChild(li);return}
-      li.innerHTML='<span class="grip">⠿</span><span class="ord">'+(i+1)+'</span><span class="nm">'+
-        s.name+'</span>';}
-    else{li.className="ev";
-      li.innerHTML='<span class="grip">⠿</span><span class="ord">'+(i+1)+'</span><span class="nm">'+
-        it.label+(it.min?'（'+it.min+'分）':'')+'</span>';}
-    li.innerHTML+='<button class="mini" onclick="rm('+i+')">×</button>';
-    dnd(li,i);ul.appendChild(li);
-  });
-  const nOV=Object.keys(OV.stn).length+Object.keys(OV.seg).length+Object.keys(OV.pair).length;
-  document.getElementById("ovcount").textContent=nOV?"現在 "+nOV+" 件の修正を保持しています。":"";
-  if(!C().items.length){
-    document.getElementById("sched").innerHTML='<div class="empty">左から店舗を追加してください。</div>';
-    document.getElementById("announce").innerHTML="";document.getElementById("warn").innerHTML="";
-    document.getElementById("links").innerHTML="";document.getElementById("rich").innerHTML="";
-    save();return;
-  }
-  const R=calc(C());let html="",ann=[],missing=[],links=[];
-  R.rows.forEach(r=>{
-    if(r.k==="ev"){
-      html+='<div class="row"><div class="t num">'+m2t(r.t)+'</div><div class="rail"></div><div class="body">'+
-        '<div class="evbox"><input class="ed wide" value="'+esc(r.label)+
-        '" onchange="setEv('+r.idx+',\'label\',this.value)"> <input class="ed" value="'+r.min+
-        '" onchange="setEv('+r.idx+',\'min\',this.value)"> 分'+
-        (r.type==="quiz"?'　<span class="meta">※車内で実施</span>':
-         '　<span class="meta">再集合 '+m2t(r.t+r.min)+'</span>')+'</div></div></div>';
-    }else if(r.k==="pair"){
-      html+='<div class="row"><div class="t"></div><div class="rail"></div><div class="body"><div class="lg">'+
-        '<div class="lghd">'+modeBtn(r.idx,r.mode)+'<b>'+r.sa.s+'駅エリア内を徒歩</b>'+
-        '<span class="sp"></span>'+chk(gmap(loc(r.a),loc(r.b),"walking"),'地図')+'</div>'+
-        '<table class="lgt">'+
-        '<tr><td class="k">徒歩</td><td>'+r.a.name+' → '+r.b.name+
-          '　<input class="ed" value="'+r.w+'" onchange="setPair(\''+r.key+'\',this.value)"> 分</td></tr>'+
-        '<tr><td class="k">使う駅</td><td>出発 '+selHTML(r.a,r.sa.s,r.ai,"dep")+
-          '　到着 '+selHTML(r.b,r.sb.s,r.bi,"arr")+'</td></tr>'+
-        '</table></div></div></div>';
-    }else if(r.k==="train"){
-      const g=r.g;links.push({a:r.sa.s,b:r.sb.s,dep:r.atStn});
-      if(g.none)missing.push(r.sa.s+"→"+r.sb.s);
-      const btns=chk(yahoo(C(),r.sa.s,r.sb.s,r.atStn),'乗換を調べる')+
-        chk(wada(r.sb.s),'号車を調べる','w')+
-        chk(gmap(loc(r.a),loc(r.b),"transit"),'地図');
-      const st1='<b>'+m2t(r.atStn)+'</b> 着'+
-        (r.wait<0?'　<b class="ng">この電車に間に合いません（'+(-r.wait)+'分不足）</b>'
-                 :'　待ち <b'+(r.wait>=20?' class="wn"':'')+'>'+r.wait+'分</b>');
-      const status=g.fixed?'<b class="okk">号車は確定済み</b>':
-        (g.none?'<b class="ng">この区間のデータがありません</b>':
-        (g.rev?'<b class="ng">逆方向の実績を流用：号車は要確認</b>':
-        (g.fresh?'前回使用値':'<b class="wn">しばらく未使用</b>')+'（未検証・'+g.n+'回使用）'));
-      html+='<div class="row train"><div class="t"></div><div class="rail"></div><div class="body">'+
-        '<div class="lg'+(g.none?' lgng':'')+'">'+
-        '<div class="lghd">'+modeBtn(r.idx,r.mode)+'<b>'+r.sa.s+' → '+r.sb.s+'</b>'+
-        '<span class="sp"></span>'+btns+'</div>'+
-        '<table class="lgt">'+
-        '<tr><td class="k">店 → 駅</td><td>'+selHTML(r.a,r.sa.s,r.ai,"dep")+
-          '　徒歩 <input class="ed" value="'+r.sa.w+'" onchange="setStn(\''+r.a.id+'\',\''+esc(r.sa.s)+
-          '\',\'w\',this.value)"> 分　'+st1+
-          chk(gmap(loc(r.a),r.sa.s+"駅","walking"),'徒歩')+'</td></tr>'+
-        '<tr><td class="k">電車</td><td>発 <input class="edt'+(r.fd?' fixed':'')+'" value="'+
-          (r.fd?m2t(r.dep):'')+'" placeholder="'+m2t(r.dep)+'" onchange="setLegT('+r.idx+',\'dept\',this.value)">'+
-          '　着 <input class="edt'+(r.fa?' fixed':'')+'" value="'+(r.fa?m2t(r.arr):'')+
-          '" placeholder="'+m2t(r.arr)+'" onchange="setLegT('+r.idx+',\'arrt\',this.value)">'+
-          '　所要 '+r.dur+'分'+
-          (r.fa?'':'（<input class="ed" value="'+g.d+'" onchange="setSeg(\''+g.key+'\',\'d\',this.value)">分）')+
-          ((r.fd||r.fa)?' <button class="mini" onclick="clearT('+r.idx+')">時刻を自動に戻す</button>':'')+
-          (g.line?'<div class="meta">'+g.line+(g.track?'／'+g.track:'')+(g.via?'／乗換：'+g.via:'')+'</div>':'')+
-          '</td></tr>'+
-        '<tr><td class="k">乗車位置</td><td><input class="ed wide" value="'+esc(g.car)+
-          '" placeholder="要確認" onchange="setSeg(\''+g.key+'\',\'car\',this.value)">'+
-          '　<span class="meta">'+status+'</span></td></tr>'+
-        '<tr><td class="k">駅 → 店</td><td>'+selHTML(r.b,r.sb.s,r.bi,"arr")+
-          '　出口 <input class="ed wide" value="'+esc(r.sb.ex)+'" placeholder="出口" onchange="setStn(\''+
-          r.b.id+'\',\''+esc(r.sb.s)+'\',\'ex\',this.value)">'+
-          '　徒歩 <input class="ed" value="'+r.sb.w+'" onchange="setStn(\''+r.b.id+'\',\''+esc(r.sb.s)+
-          '\',\'w\',this.value)"> 分'+chk(gmap(r.sb.s+"駅",loc(r.b),"walking"),'徒歩')+'</td></tr>'+
-        '</table></div></div></div>';
-    }else{
-      html+='<div class="row"><div class="t num">'+m2t(r.a)+'-'+m2t(r.b)+'</div>'+
-        '<div class="rail"><span class="dot"></span></div><div class="body">'+
-        '<div class="stopname">'+r.s.name+'</div><div class="meta">'+r.stn.s+'駅'+
-        (r.stn.ex?'／出口 '+r.stn.ex:'')+(r.s.note?'　<b style="color:#8A6212">'+r.s.note+'</b>':'')+
-        '</div></div></div>';
-      ann.push({name:r.s.name,stn:r.stn.s,a:m2t(r.a),b:m2t(r.b),c:m2t(r.c)});
+function load_() {
+  try {
+    const raw = localStorage.getItem(LS);
+    if (raw) {
+      const d = JSON.parse(raw);
+      return { posts: d.posts||[], days: d.days||{}, weeks: d.weeks||{}, habits: d.habits||[], wishlist: d.wishlist||[], synced: d.synced||{} };
     }
-  });
-  document.getElementById("sched").innerHTML=html;
-  document.getElementById("warn").innerHTML=missing.length?
-    '<div class="warn">所要時間データがない区間が '+missing.length+' 件：'+[...new Set(missing)].join("、")+
-    '（仮20分で計算中）</div>':'';
-  document.getElementById("links").innerHTML=links.map(l=>
-    '<a href="'+yahoo(C(),l.a,l.b,l.dep)+'" target="_blank" rel="noopener">'+m2t(l.dep)+'　'+
-    l.a+' → '+l.b+'（Yahoo!乗換）</a>').join("");
-  document.getElementById("announce").innerHTML=
-    '<table><tr><th>順</th><th>店舗</th><th>最寄駅</th><th>点検時刻</th><th>閉店時刻</th></tr>'+
-    ann.map((x,i)=>'<tr><td class="num">'+(i+1)+'</td><td>'+x.name+'</td><td>'+x.stn+
-    '</td><td class="num">'+x.a+'〜'+x.b+'</td><td class="num"><b>'+x.c+'</b></td></tr>').join("")+
-    '</table><p style="margin:10px 0 0"><button class="btn ghost sm" onclick="copyTbl()">この表をコピー</button>'+
-    ' <span class="meta">終了予定 '+m2t(R.end)+'</span></p>';
-  window._ann=ann;
-  document.getElementById("rich").innerHTML=richHTML();
-  save();
+  } catch (e) {}
+  return migrate_();
 }
-const CL_HEAD="background:#16324F;color:#fff;font-weight:bold;border:1px solid #9BB0C4;padding:4px 8px;font-size:12px;";
-const CL_BASE="border:1px solid #B8C7D6;padding:3px 8px;font-size:12px;";
-const CL_STOP=CL_BASE+"background:#DCE6F1;font-weight:bold;";
-const CL_TRAIN=CL_BASE+"background:#EAF1F8;";
-const CL_WALK=CL_BASE+"background:#F4F6F8;color:#5A6B7B;";
-const CL_EV=CL_BASE+"background:#FFF2CC;color:#8A6212;font-weight:bold;";
-const CL_TITLE="background:#1F4E79;color:#fff;font-weight:bold;border:1px solid #9BB0C4;padding:5px 8px;font-size:13px;";
-function tr(cells,style){return "<tr>"+cells.map(c=>'<td style="'+style+'">'+
-  (c==null?"":String(c))+"</td>").join("")+"</tr>"}
-function richHTML(){
-  const H=["移動手段","時刻","乗車駅／降車駅","線名","番線・行先","両数・号車","拠点名"];
-  let h='<table style="border-collapse:collapse;font-family:Meiryo,sans-serif">';
-  courses.forEach(c=>{
-    const R=calc(c);
-    h+='<tr><td colspan="7" style="'+CL_TITLE+'">'+c.name+'　'+(c.date||"")+'　開始 '+(c.start||"")+'</td></tr>';
-    h+="<tr>"+H.map(x=>'<td style="'+CL_HEAD+'">'+x+"</td>").join("")+"</tr>";
-    R.rows.forEach(r=>{
-      if(r.k==="stop"){
-        h+=tr(["",m2t(r.a)+"-"+m2t(r.b),r.stn.s+"駅","",r.stn.ex?"出口 "+r.stn.ex:"","",r.s.name],CL_STOP);
-      }else if(r.k==="ev"){
-        h+=tr(["",m2t(r.t)+(r.min?"-"+m2t(r.t+r.min):""),"","","",r.min?r.min+"分":"車内",r.label],CL_EV);
-      }else if(r.k==="pair"){
-        h+=tr(["徒歩"+r.w+"分","","","","","",r.a.name+" → "+r.b.name],CL_WALK);
-      }else if(r.k==="train"){
-        const g=r.g;
-        h+=tr(["徒歩"+r.sa.w+"分","","","","","",r.a.name+" → "+r.sa.s+"駅"],CL_WALK);
-        h+=tr(["出発",m2t(r.dep)+((r.fd||r.fa)?" ★":""),r.sa.s+"駅",g.line||"",g.track||"",g.car||"要確認",""],CL_TRAIN);
-        if(g.via)h+=tr(["乗り換え","",g.via,"","","",""],CL_TRAIN);
-        h+=tr(["到着",m2t(r.arr),r.sb.s+"駅","","","",""],CL_TRAIN);
-        h+=tr(["徒歩"+r.sb.w+"分","","","",r.sb.ex?"出口 "+r.sb.ex:"","",r.sb.s+"駅 → "+r.b.name],CL_WALK);
-      }
+
+/* ============ 写真圧縮 ============ */
+const compressImage = (file) => new Promise((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 800; let { width, height } = img;
+      if (width > max || height > max) { const s = Math.min(max/width, max/height); width = Math.round(width*s); height = Math.round(height*s); }
+      const cv = document.createElement("canvas"); cv.width = width; cv.height = height;
+      cv.getContext("2d").drawImage(img, 0, 0, width, height);
+      resolve(cv.toDataURL("image/jpeg", 0.7));
+    };
+    img.onerror = reject; img.src = e.target.result;
+  };
+  r.onerror = reject; r.readAsDataURL(file);
+});
+
+/* ============ 共通パーツ ============ */
+const Card = ({ children, style }) => (
+  <div style={{ background: C.card, border: `1px solid ${C.cardLine}`, borderRadius: 16, padding: 16, color: C.ink, boxShadow: "0 2px 10px rgba(0,0,0,0.25)", ...style }}>{children}</div>
+);
+const Label = ({ children }) => (
+  <div style={{ fontSize: 11, letterSpacing: "0.12em", color: C.inkSoft, marginBottom: 6, fontWeight: 700 }}>{children}</div>
+);
+const inputStyle = {
+  width: "100%", background: "#FFFDF6", border: "1px solid #E2D7BF", borderRadius: 10,
+  padding: "10px 12px", fontSize: 15, color: C.ink, fontFamily: BODY, outline: "none",
+};
+const navArrow = { background:"#232939", border:"1px solid #313A52", color:"#EAE5D7", borderRadius:10, width:38, height:38, fontSize:20, cursor:"pointer", fontFamily:BODY };
+const Photo = (p) => <img alt="" referrerPolicy="no-referrer" {...p} />;
+
+/* ============ 本体 ============ */
+function App() {
+  const todayKey = toKey(new Date());
+  const [tab, setTab] = useState("flow");
+  const [sub, setSub] = useState("week");
+
+  const [db, setDb] = useState(load_);
+  const dbRef = useRef(db);
+  useEffect(() => {
+    dbRef.current = db;
+    try { localStorage.setItem(LS, JSON.stringify(db)); }
+    catch (e) { alert("端末の保存容量がいっぱいかも。設定タブでバックアップを書き出して、古い写真を減らしてね"); }
+  }, [db]);
+
+  const [gasUrl, setGasUrl] = useState(localStorage.getItem(LS_URL) || "");
+  const [urlDraft, setUrlDraft] = useState(localStorage.getItem(LS_URL) || "");
+  const [syncMsg, setSyncMsg] = useState("");
+
+  const [type, setType] = useState("thanks");
+  const [text, setText] = useState("");
+  const [photo, setPhoto] = useState(null);
+  const [flash, setFlash] = useState("");
+
+  const [weekOffset, setWeekOffset] = useState(0);
+  const curMonday = toKey(addDays(mondayOf(new Date()), weekOffset*7));
+  const [weekDraft, setWeekDraft] = useState(db.weeks[curMonday] || { mondayKey: curMonday, goalText:"", goalAchieved:false, wins:"", insight:"", nextWeek:"" });
+  useEffect(() => {
+    setWeekDraft(dbRef.current.weeks[curMonday] || { mondayKey: curMonday, goalText:"", goalAchieved:false, wins:"", insight:"", nextWeek:"" });
+  }, [curMonday]);
+
+  const [monthKey, setMonthKey] = useState(todayKey.slice(0,7));
+  const [showDays, setShowDays] = useState(7);
+  const [newWish, setNewWish] = useState("");
+  const [newHabit, setNewHabit] = useState("");
+  const [newFreq, setNewFreq] = useState("daily");
+  const [newTarget, setNewTarget] = useState(3);
+
+  const say = (m) => { setFlash(m); setTimeout(() => setFlash(""), 1600); };
+
+  /* ---- シート送信（任意・失敗しても端末には残る） ---- */
+  const pushRemote = async (payload) => {
+    if (!gasUrl) return;
+    try {
+      await fetch(gasUrl, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+    } catch (e) {}
+  };
+
+  /* ---- 投稿する ---- */
+  const submit = () => {
+    if (!text.trim() && !photo) return;
+    const now = new Date();
+    const p = { id:`p${now.getTime()}`, ts: now.toISOString(), date: toKey(now), type, text: text.trim(), photo };
+    setDb((d) => ({ ...d, posts: [p, ...d.posts] }));
+    setText(""); setPhoto(null);
+    say(TYPES[type].icon + " 記録したよ");
+    pushRemote({ action:"addPost", post: p });
+  };
+
+  const delPost = (id) => {
+    if (!window.confirm("この記録を削除する？")) return;
+    setDb((d) => ({ ...d, posts: d.posts.filter((p) => p.id !== id) }));
+    pushRemote({ action:"deletePost", id });
+  };
+
+  const onPhotoPick = async (file) => {
+    if (!file) return;
+    try { setPhoto(await compressImage(file)); } catch (e) { alert("写真の読み込みに失敗しました"); }
+  };
+
+  /* ---- 習慣・気分（タップで即保存） ---- */
+  const toggleHabit = (id) => {
+    setDb((d) => {
+      const cur = d.days[todayKey] || { mood:null, habitChecks:{} };
+      const next = { ...cur, habitChecks: { ...cur.habitChecks, [id]: !cur.habitChecks[id] } };
+      pushRemote({ action:"saveDay", date: todayKey, day: next });
+      return { ...d, days: { ...d.days, [todayKey]: next } };
     });
-    h+=tr(["終了",m2t(R.end),"","","","",""],CL_STOP);
-    h+='<tr><td colspan="7" style="border:none;height:14px"></td></tr>';
-  });
-  return h+"</table>";
-}
-function copyRich(){
-  const el=document.getElementById("rich");
-  const rg=document.createRange();rg.selectNodeContents(el);
-  const sl=window.getSelection();sl.removeAllRanges();sl.addRange(rg);
-  let okc=false;try{okc=document.execCommand("copy")}catch(e){}
-  sl.removeAllRanges();
-  say(okc?"書式つきでコピーしました。Excelやスプレッドシートに貼り付けてください。"
-        :"コピーできませんでした。下の表をマウスで選択してコピーしてください。");
-}
-function dlXls(){
-  const html='<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8">'+
-    '</head><body>'+richHTML()+'</body></html>';
-  const b=new Blob(["\ufeff"+html],{type:"application/vnd.ms-excel;charset=utf-8"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(b);
-  a.download="環境整備点検_運行表.xls";a.click();
-  say("保存しました。Excelで開くと色と罫線が入った状態になります。");
-}
-/* ===== 自動保存 ===== */
-const SKEY="nagi-route-builder-v1";
-let persist=null, saveT=null;
-function rules(){return {insp:document.getElementById("insp").value,buf:document.getElementById("buf").value,
-  same:document.getElementById("same").value,close:document.getElementById("close").value}}
-function payload(){return JSON.stringify({v:1,courses:courses,OV:OV,rules:rules(),ci:ci})}
-function stnow(){const d=new Date();
-  return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")+":"+
-    String(d.getSeconds()).padStart(2,"0")}
-function saveMsg(t){const e=document.getElementById("savest");if(e)e.innerHTML=t}
-async function doSave(){
-  const p=payload();
-  if(persist==="ws"){try{await window.storage.set(SKEY,p);
-    saveMsg("自動保存済み　<span style=\"color:#1F7A5C\">"+stnow()+"</span>");return}catch(e){}}
-  if(persist==="ls"){try{localStorage.setItem(SKEY,p);
-    saveMsg("自動保存済み　<span style=\"color:#1F7A5C\">"+stnow()+"</span>");return}catch(e){}}
-  saveMsg("<span style=\"color:#C0392B\">この画面では自動保存できません。</span>作業後に「バックアップを書き出す」を押してください。");
-}
-function save(){clearTimeout(saveT);saveT=setTimeout(doSave,400)}
-function applyState(o){
-  if(o.courses&&o.courses.length){courses=o.courses;ci=Math.min(o.ci||0,o.courses.length-1)}
-  if(o.OV)OV={stn:o.OV.stn||{},seg:o.OV.seg||{},pair:o.OV.pair||{},extra:o.OV.extra||{},news:o.OV.news||[],hide:o.OV.hide||{}};
-  if(o.rules)Object.keys(o.rules).forEach(k=>{const e=document.getElementById(k);if(e)e.value=o.rules[k]});
-}
-async function boot(){
-  let raw=null;
-  try{if(window.storage&&window.storage.get){persist="ws";
-    const r=await window.storage.get(SKEY);if(r&&r.value)raw=r.value}}catch(e){persist=null}
-  if(persist===null){try{localStorage.setItem("__t","1");localStorage.removeItem("__t");persist="ls";
-    raw=localStorage.getItem(SKEY)}catch(e){persist=null}}
-  if(raw){try{applyState(JSON.parse(raw));buildPicker();render();
-    say("前回の続きから復元しました（"+courses.length+"コース）");return}catch(e){}}
-  render();doSave();
-}
-function resetAll(){
-  courses=[{name:"1日目 A班",date:"2026-08-26",start:"09:00",items:[]}];ci=0;
-  OV={stn:{},seg:{},pair:{},extra:{},news:[],hide:{}};buildPicker();render();say("最初の状態に戻しました。")}
-function toggleNew(){
-  const f=document.getElementById("newform");
-  const open=f.style.display==="none";
-  f.style.display=open?"block":"none";
-  if(open&&!document.getElementById("n_blk").options.length){
-    document.getElementById("n_blk").innerHTML=
-      Object.keys(BL).map(k=>'<option value="'+k+'">'+k+'：'+BL[k]+'</option>').join("");
-  }
-}
-function saveNew(){
-  const nm=document.getElementById("n_name").value.trim();
-  const sn=document.getElementById("n_stn").value.trim().replace(/駅$/,"");
-  if(!nm||!sn){say("店名と最寄駅は必須です。");return}
-  const id="N"+Date.now().toString(36);
-  OV.news=(OV.news||[]).concat([{id:id,name:nm,blk:document.getElementById("n_blk").value||"A",
-    addr:document.getElementById("n_addr").value.trim(),
-    stn:sn,note:"新店（手動登録）",
-    stns:[{s:sn,ex:document.getElementById("n_ex").value.trim(),
-           w:parseInt(document.getElementById("n_w").value)||5,n:0}]}]);
-  ["n_name","n_stn","n_ex","n_w","n_addr"].forEach(k=>document.getElementById(k).value="");
-  buildPicker();render();say("「"+nm+"」を登録しました。検索から追加できます。");
-}
-function delNew(id){
-  const s0=st(id);
-  courses.forEach(c=>{c.items=c.items.filter(it=>it.type!=="stop"||it.id!==id)});
-  OV.news=(OV.news||[]).filter(x=>x.id!==id);
-  buildPicker();render();say("「"+(s0?s0.name:"")+"」を削除しました。");
-}
-function newList(){
-  const el=document.getElementById("newlist");if(!el)return;
-  const L=OV.news||[];
-  el.innerHTML=L.length?'<p class="hint" style="margin:10px 0 4px"><b>登録済みの新店（'+L.length+'件）</b></p>'+
-    L.map(x=>'<div class="nrow"><span>'+x.name+'</span>'+
-    '<select class="stnsel" onchange="setNewBlk(\''+x.id+'\',this.value)">'+
-    Object.keys(BL).map(k=>'<option value="'+k+'"'+(x.blk===k?' selected':'')+'>'+k+'：'+BL[k]+'</option>').join("")+
-    '</select><span class="tag">'+x.stn+'</span>'+
-    '<button class="mini" onclick="delNew(\''+x.id+'\')">削除</button></div>').join(""):"";
-}
-function toggleImp(){const f=document.getElementById("impform");
-  f.style.display=f.style.display==="none"?"block":"none"}
-function splitLine(l,sep){
-  const out=[];let cur="",q=false;
-  for(let i=0;i<l.length;i++){const c=l[i];
-    if(q){if(c==='"'){if(l[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}
-    else if(c==='"')q=true;
-    else if(c===sep){out.push(cur);cur=""}
-    else cur+=c}
-  out.push(cur);return out.map(x=>x.trim());
-}
-const IMPCOL=[["name",["店舗名","店名","拠点","名称"]],["addr",["住所","所在地"]],
-  ["stn",["最寄駅","最寄り駅","駅"]],["ex",["出口"]],["walk",["徒歩"]],["blk",["ブロック","エリア"]]];
-function guessBlk(t){
-  const M=[["A",["銀座","新橋","虎ノ門","築地"]],["B",["神田","神保町","浅草橋","九段"]],
-   ["C",["両国","錦糸町","浅草","新小岩","墨田","葛飾","江東"]],["D",["新宿","高田馬場","大久保"]],
-   ["E",["中野","高円寺","荻窪","阿佐","杉並"]],["F",["池袋","江古田","駒込","豊島","練馬","板橋","北区"]],
-   ["G",["渋谷","世田谷","下北沢","三軒茶屋","成城","笹塚","目黒"]],
-   ["H",["品川","大田","蒲田","五反田","田町","大森","港区芝浦","武蔵小山","青物横丁"]],
-   ["I",["川崎","横浜","神奈川県","杉田","青葉台","菊名","白楽","元住吉","高座"]],
-   ["J",["埼玉","大宮","川口","川越"]],["K",["千葉","船橋","市川","行徳","八幡"]],
-   ["L",["八王子","拝島","立川","多摩","日野"]]];
-  for(const [k,ws] of M){if(ws.some(x=>t.includes(x)))return k}
-  return "Z";
-}
-function normAddr(a){
-  if(!a)return "";
-  let x=String(a).replace(/[Ａ-Ｚａ-ｚ０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
-  x=x.replace(/^(東京都|神奈川県|埼玉県|千葉県|群馬県|栃木県|茨城県)/,"");
-  x=x.split(/[\s\u3000]/)[0];
-  x=x.replace(/[ー−–—‐]/g,"-").replace(/丁目|番地|番|号/g,"-");
-  x=x.replace(/-?(B?\d+F|地下\d+階|\d+階)$/i,"");
-  x=x.replace(/[\s\u3000]/g,"").replace(/-+/g,"-").replace(/-$/,"");
-  const m=x.match(/^(.*?)(\d+(?:-\d+)*)/);
-  return m?(m[1]+m[2]):x;
-}
-function lcs(a,b){
-  a=String(a).replace(/[\s\u3000（）()・]/g,"");b=String(b).replace(/[\s\u3000（）()・]/g,"");
-  let best=0;
-  for(let i=0;i<a.length;i++)for(let j=i+best+1;j<=a.length;j++){
-    const t=a.slice(i,j);if(b.includes(t)){if(t.length>best)best=t.length}else break}
-  return best;
-}
-function findExisting(nm,addr,stn){
-  const L=ST(),na=normAddr(addr);
-  if(na){
-    const cand=L.filter(x=>x.addr&&normAddr(x.addr)===na);
-    if(cand.length===1)return cand[0];
-    if(cand.length>1){
-      let best=null,bs=0;
-      cand.forEach(x=>{const sc=lcs(x.name,nm);if(sc>bs){bs=sc;best=x}});
-      if(bs>=3)return best;
-      return {ambiguous:true,cands:cand};
+  };
+  const setMood = (m) => {
+    setDb((d) => {
+      const cur = d.days[todayKey] || { mood:null, habitChecks:{} };
+      const next = { ...cur, mood: cur.mood === m ? null : m };
+      pushRemote({ action:"saveDay", date: todayKey, day: next });
+      return { ...d, days: { ...d.days, [todayKey]: next } };
+    });
+  };
+
+  const saveWeek = () => {
+    const w = { ...weekDraft, mondayKey: curMonday };
+    setDb((d) => ({ ...d, weeks: { ...d.weeks, [curMonday]: w } }));
+    pushRemote({ action:"saveWeek", week: w });
+    say("📖 振り返りを保存したよ");
+  };
+
+  const saveHabits = (next) => { setDb((d) => ({ ...d, habits: next })); pushRemote({ action:"saveHabits", habits: next }); };
+  const saveWishlist = (next) => { setDb((d) => ({ ...d, wishlist: next })); pushRemote({ action:"saveWishlist", wishlist: next }); };
+
+  /* ---- バックアップ ---- */
+  const exportBackup = () => {
+    const blob = new Blob([JSON.stringify(dbRef.current)], { type:"application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `ひとひ帳バックアップ_${todayKey}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  const importBackup = (file) => {
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = (e) => {
+      try {
+        const d = JSON.parse(e.target.result);
+        if (!d.posts) throw new Error("形式が違うみたい");
+        if (window.confirm("いまの記録を、このバックアップで置き換える？")) { setDb(d); say("読み込んだよ"); }
+      } catch (err) { alert("読み込めなかった…: " + err.message); }
+    };
+    r.readAsText(file);
+  };
+
+  const testConnection = async () => {
+    const u = urlDraft.trim();
+    if (!u) { setSyncMsg("URLを入れてね"); return; }
+    setSyncMsg("接続中…");
+    try {
+      const r = await (await fetch(u + "?action=ping")).json();
+      if (r.ok) { localStorage.setItem(LS_URL, u); setGasUrl(u); setSyncMsg("✓ 接続OK！これから書く記録はシートにも残るよ"); }
+      else setSyncMsg("✗ 応答が変: " + (r.error||""));
+    } catch (e) { setSyncMsg("✗ 接続できない… URLとデプロイ設定（アクセス=全員）を確認してね"); }
+  };
+  const pushAll = async () => {
+    if (!gasUrl) return;
+    setSyncMsg("送信中…");
+    const d = dbRef.current;
+    await pushRemote({ action:"bulk", posts: d.posts, days: d.days, weeks: d.weeks, habits: d.habits, wishlist: d.wishlist });
+    setSyncMsg("✓ いまの記録を全部シートへ送ったよ");
+  };
+
+  /* ---- 派生 ---- */
+  const postsByDate = useMemo(() => {
+    const m = {};
+    db.posts.forEach((p) => { (m[p.date] = m[p.date] || []).push(p); });
+    Object.values(m).forEach((a) => a.sort((x,y) => (x.ts < y.ts ? 1 : -1)));
+    return m;
+  }, [db.posts]);
+
+  const flowDates = useMemo(() => {
+    const s = new Set(Object.keys(postsByDate));
+    s.add(todayKey);
+    return Array.from(s).sort().reverse();
+  }, [postsByDate, todayKey]);
+
+  const thanksPosts = useMemo(() => db.posts.filter((p) => p.type === "thanks"), [db.posts]);
+
+  const onThisDay = useMemo(() => {
+    const d = fromKey(todayKey); const out = [];
+    for (let y = 1; y <= 10; y++) {
+      const k = `${d.getFullYear()-y}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      if (postsByDate[k] && postsByDate[k].length) out.push({ y, posts: postsByDate[k] });
     }
-  }
-  const key=String(nm).replace(/[\s\u3000（）()]/g,"");
-  const ex=L.find(x=>String(x.name).replace(/[\s\u3000（）()]/g,"")===key);
-  if(ex)return ex;
-  if(stn){
-    const same=L.filter(x=>x.stns.some(o=>o.s===stn));
-    let best=null,bs=0;
-    same.forEach(x=>{const sc=lcs(x.name,nm);if(sc>bs){bs=sc;best=x}});
-    if(bs>=3)return best;
-  }
-  return null;
+    return out;
+  }, [postsByDate, todayKey]);
+
+  const weeklyCount = (h, mk) => {
+    let c = 0;
+    weekDaysOf(mk).forEach((k) => { const day = db.days[k]; if (day && day.habitChecks && day.habitChecks[h.id]) c++; });
+    return c;
+  };
+
+  /* ============ 投稿カード ============ */
+  const PostCard = ({ p, compact }) => {
+    const t = TYPES[p.type] || TYPES.memo;
+    return (
+      <div style={{ background:"#FFFDF6", border:`1px solid ${C.cardLine}`, borderLeft:`4px solid ${t.color}`,
+        borderRadius:10, padding:"10px 12px", display:"flex", gap:10, alignItems:"flex-start" }}>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontSize:11, color:C.inkSoft, fontWeight:700, marginBottom:3 }}>
+            {t.icon} {compact ? fmtShort(p.date) + " " : ""}{fmtTime(p.ts)}
+          </div>
+          {p.text && <div style={{ fontSize:15, lineHeight:1.7, color:C.ink, whiteSpace:"pre-wrap", wordBreak:"break-word" }}>{p.text}</div>}
+          {p.photo && <Photo src={p.photo} style={{ width:"100%", borderRadius:8, marginTop:8, display:"block" }} />}
+        </div>
+        <button onClick={() => delPost(p.id)} aria-label="削除"
+          style={{ background:"none", border:"none", color:"#C9C0AC", fontSize:16, cursor:"pointer", padding:2, flexShrink:0 }}>×</button>
+      </div>
+    );
+  };
+
+  /* ============ タブ：流れ ============ */
+  const renderFlow = () => {
+    const today = db.days[todayKey] || { mood:null, habitChecks:{} };
+    const dates = flowDates.slice(0, showDays);
+    const t = TYPES[type];
+
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        {/* 入力 */}
+        <Card style={{ padding:14 }}>
+          <div style={{ display:"flex", gap:6, marginBottom:10 }}>
+            {Object.keys(TYPES).map((k) => (
+              <button key={k} onClick={() => setType(k)}
+                style={{ flex:1, padding:"8px 0", borderRadius:10, cursor:"pointer", fontFamily:BODY, fontSize:13, fontWeight:700,
+                  border:`2px solid ${type===k ? TYPES[k].color : C.cardLine}`,
+                  background: type===k ? "#F0E4CB" : "#FFFDF6", color: type===k ? TYPES[k].color : C.inkSoft }}>
+                {TYPES[k].icon} {TYPES[k].label}
+              </button>
+            ))}
+          </div>
+          <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t.ph} rows={2}
+            style={{ ...inputStyle, resize:"vertical", lineHeight:1.7 }} />
+          {photo && (
+            <div style={{ position:"relative", marginTop:8 }}>
+              <Photo src={photo} style={{ width:"100%", borderRadius:10, display:"block" }} />
+              <button onClick={() => setPhoto(null)}
+                style={{ position:"absolute", top:6, right:6, background:"rgba(26,30,44,0.75)", color:"#fff", border:"none",
+                  borderRadius:8, padding:"5px 9px", fontSize:12, fontFamily:BODY, cursor:"pointer" }}>削除</button>
+            </div>
+          )}
+          <div style={{ display:"flex", gap:8, marginTop:10 }}>
+            <label style={{ width:48, display:"flex", alignItems:"center", justifyContent:"center",
+              border:`1px solid ${C.cardLine}`, borderRadius:10, background:"#FFFDF6", cursor:"pointer", fontSize:18 }}>
+              📷<input type="file" accept="image/*" style={{ display:"none" }} onChange={(e) => onPhotoPick(e.target.files && e.target.files[0])} />
+            </label>
+            <button onClick={submit} disabled={!text.trim() && !photo}
+              style={{ flex:1, background: (!text.trim() && !photo) ? "#D9CDB4" : C.amber, color:"#2A2313", border:"none",
+                borderRadius:10, padding:"12px 0", fontSize:15, fontWeight:700, fontFamily:BODY,
+                cursor:(!text.trim() && !photo) ? "default" : "pointer" }}>
+              記録する
+            </button>
+          </div>
+          <div style={{ fontSize:11, color:C.inkSoft, marginTop:8, textAlign:"center" }}>1日に何回でもOK。押した瞬間に保存されるよ</div>
+        </Card>
+
+        {/* 習慣＋気分 */}
+        <Card style={{ padding:14 }}>
+          <div style={{ display:"flex", gap:6, justifyContent:"space-between", marginBottom:10 }}>
+            {MOODS.map((m) => (
+              <button key={m} onClick={() => setMood(m)}
+                style={{ flex:1, fontSize:22, padding:"5px 0", borderRadius:10,
+                  border:`2px solid ${today.mood===m ? C.amber : "transparent"}`,
+                  background: today.mood===m ? "#F0E4CB" : "#FFFDF6", cursor:"pointer",
+                  filter: today.mood && today.mood!==m ? "grayscale(0.7) opacity(0.6)" : "none" }}>{m}</button>
+            ))}
+          </div>
+          {db.habits.length === 0 ? (
+            <div style={{ fontSize:13, color:C.inkSoft, textAlign:"center" }}>
+              習慣は<button onClick={() => setTab("settings")} style={{ background:"none", border:"none", color:C.amberDark, fontWeight:700, cursor:"pointer", fontFamily:BODY, fontSize:13, padding:0 }}>設定タブ</button>から追加できるよ
+            </div>
+          ) : (
+            <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+              {db.habits.map((h) => {
+                const done = !!today.habitChecks[h.id];
+                const weekly = habitFreq(h) === "weekly";
+                const c = weekly ? weeklyCount(h, toKey(mondayOf(new Date()))) : 0;
+                return (
+                  <button key={h.id} onClick={() => toggleHabit(h.id)}
+                    style={{ padding:"7px 12px", borderRadius:999, cursor:"pointer", fontFamily:BODY, fontSize:13, fontWeight:700,
+                      border:`1.5px solid ${done ? C.amberDark : C.cardLine}`,
+                      background: done ? C.amber : "#FFFDF6", color: done ? "#2A2313" : C.inkSoft }}>
+                    {done ? "✓ " : ""}{h.name}
+                    {weekly && <span style={{ fontSize:11, opacity:0.85 }}> {c}/{h.target||1}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        {/* 今日の問い */}
+        <Card style={{ background:C.card2, padding:14 }}>
+          <Label>人として — きょうの問い</Label>
+          <div style={{ fontFamily:DISPLAY, fontSize:16, fontWeight:600, color:C.ink, marginBottom:8 }}>「{promptFor(todayKey)}」</div>
+          <button onClick={() => { setType("diary"); setText(`「${promptFor(todayKey)}」→ `); window.scrollTo({ top:0, behavior:"smooth" }); }}
+            style={{ background:"#FFFDF6", border:`1px solid ${C.cardLine}`, borderRadius:10, padding:"9px 0", width:"100%",
+              fontFamily:BODY, fontSize:14, fontWeight:700, color:C.amberDark, cursor:"pointer" }}>
+            この問いに答える
+          </button>
+        </Card>
+
+        {/* ◯年前の今日 */}
+        {onThisDay.map(({ y, posts }) => (
+          <div key={y} style={{ background:C.panel, border:`1px solid ${C.line}`, borderRadius:12, padding:"10px 14px" }}>
+            <div style={{ fontSize:10, color:C.amber, letterSpacing:"0.1em", fontWeight:700, marginBottom:4 }}>⏪ {y}年前の今日</div>
+            {posts.slice(0,3).map((p) => (
+              <div key={p.id} style={{ fontSize:13, color:C.textOnDark, lineHeight:1.6 }}>
+                {(TYPES[p.type]||TYPES.memo).icon} {p.text || "（写真）"}
+              </div>
+            ))}
+          </div>
+        ))}
+
+        {/* 流れ */}
+        {dates.map((k) => (
+          <div key={k} style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            <div style={{ fontFamily:DISPLAY, fontSize:15, color: k===todayKey ? C.amber : C.mutedOnDark, fontWeight:700, marginTop:4 }}>
+              {k === todayKey ? "きょう" : fmtLong(k)}
+              {db.days[k] && db.days[k].mood ? ` ${db.days[k].mood}` : ""}
+            </div>
+            {(postsByDate[k] || []).length === 0 ? (
+              <div style={{ fontSize:13, color:C.mutedOnDark, paddingLeft:4 }}>まだ記録なし。ひと言からどうぞ🍜</div>
+            ) : (
+              postsByDate[k].map((p) => <PostCard key={p.id} p={p} />)
+            )}
+          </div>
+        ))}
+        {flowDates.length > showDays && (
+          <button onClick={() => setShowDays((n) => n + 14)}
+            style={{ background:C.panel, border:`1px solid ${C.line}`, color:C.textOnDark, borderRadius:12,
+              padding:"12px 0", fontFamily:BODY, fontSize:14, cursor:"pointer" }}>
+            もっと前を見る
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  /* ============ 振り返り：週 ============ */
+  const renderWeek = () => {
+    const days = weekDaysOf(curMonday);
+    const wPosts = days.flatMap((k) => postsByDate[k] || []);
+    const dailyH = db.habits.filter((h) => habitFreq(h)==="daily");
+    const weeklyH = db.habits.filter((h) => habitFreq(h)==="weekly");
+
+    let scores = [];
+    dailyH.forEach((h) => { let c=0; days.forEach((k)=>{ const d=db.days[k]; if(d&&d.habitChecks&&d.habitChecks[h.id]) c++; }); scores.push(c/7); });
+    weeklyH.forEach((h) => { let c=0; days.forEach((k)=>{ const d=db.days[k]; if(d&&d.habitChecks&&d.habitChecks[h.id]) c++; }); scores.push(Math.min(c/(h.target||1),1)); });
+    const pct = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*100) : 0;
+
+    const dotRow = (h) => (
+      <div key={h.id} style={{ display:"flex", alignItems:"center" }}>
+        <div style={{ flex:1, fontSize:13, color:C.ink, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", paddingRight:6 }}>{h.name}</div>
+        {days.map((k) => {
+          const d = db.days[k];
+          const on = d && d.habitChecks && d.habitChecks[h.id];
+          return (
+            <div key={k} style={{ width:26, display:"flex", justifyContent:"center" }}>
+              <div style={{ width:14, height:14, borderRadius:"50%", background: on ? C.amber : "transparent",
+                border:`2px solid ${on ? C.amberDark : (k>todayKey ? "#EEE7D2" : C.cardLine)}` }} />
+            </div>
+          );
+        })}
+      </div>
+    );
+
+    const section = (tk) => {
+      const list = wPosts.filter((p) => p.type === tk);
+      if (!list.length) return null;
+      const t = TYPES[tk];
+      return (
+        <Card style={tk==="thanks" ? { background:C.card2 } : undefined}>
+          <Label>{t.icon} この週の{t.label}（{list.length}件）</Label>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {list.map((p) => <PostCard key={p.id} p={p} compact />)}
+          </div>
+        </Card>
+      );
+    };
+
+    return (
+      <React.Fragment>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <button onClick={() => setWeekOffset((o)=>o-1)} style={navArrow}>‹</button>
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontFamily:DISPLAY, fontSize:19, color:C.textOnDark, fontWeight:600 }}>{fmtShort(days[0])} 〜 {fmtShort(days[6])}</div>
+            <div style={{ fontSize:12, color:C.mutedOnDark }}>{weekOffset===0?"今週":weekOffset===-1?"先週":`${-weekOffset}週間前`}・記録{wPosts.length}件</div>
+          </div>
+          <button onClick={() => weekOffset<0 && setWeekOffset((o)=>o+1)} style={{ ...navArrow, opacity: weekOffset<0?1:0.25 }} disabled={weekOffset>=0}>›</button>
+        </div>
+
+        <Card style={{ background:C.card2 }}>
+          <Label>🎯 この週の目標</Label>
+          <input value={weekDraft.goalText} onChange={(e)=>setWeekDraft((w)=>({...w, goalText:e.target.value}))}
+            placeholder="例：面接で候補者の話を最後まで聴く" style={inputStyle} />
+          {weekDraft.goalText.trim() && (
+            <button onClick={()=>setWeekDraft((w)=>({...w, goalAchieved:!w.goalAchieved}))}
+              style={{ marginTop:10, width:"100%", background: weekDraft.goalAchieved?"#E4EEDB":"#FFFDF6",
+                border:`1px solid ${weekDraft.goalAchieved?C.green:C.cardLine}`, borderRadius:10, padding:"9px 0",
+                cursor:"pointer", fontFamily:BODY, fontSize:14, fontWeight:700, color: weekDraft.goalAchieved?C.greenDark:C.inkSoft }}>
+              {weekDraft.goalAchieved ? "達成できた！🎉" : "達成できたらタップ"}
+            </button>
+          )}
+        </Card>
+
+        {db.habits.length > 0 && (
+          <Card>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
+              <Label>習慣の達成</Label>
+              <div style={{ fontFamily:DISPLAY, fontSize:24, fontWeight:700, color:C.amberDark }}>{pct}<span style={{fontSize:13}}>%</span></div>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:4 }}>
+              <div style={{ display:"flex" }}>
+                <div style={{ flex:1 }} />
+                {days.map((k)=>(
+                  <div key={k} style={{ width:26, textAlign:"center", fontSize:10, color: k===todayKey?C.amberDark:C.inkSoft, fontWeight: k===todayKey?700:400 }}>
+                    {WD[fromKey(k).getDay()]}
+                  </div>
+                ))}
+              </div>
+              {dailyH.map(dotRow)}
+              {weeklyH.length > 0 && (
+                <React.Fragment>
+                  <div style={{ fontSize:11, color:C.inkSoft, fontWeight:700, letterSpacing:"0.1em" }}>週の習慣</div>
+                  {weeklyH.map((h)=>{
+                    let c=0; days.forEach((k)=>{ const d=db.days[k]; if(d&&d.habitChecks&&d.habitChecks[h.id]) c++; });
+                    const met = c >= (h.target||1);
+                    return (
+                      <div key={h.id}>
+                        {dotRow(h)}
+                        <div style={{ textAlign:"right", fontSize:12, fontWeight:700, color: met?C.greenDark:C.inkSoft }}>{c}/{h.target||1}{met?" 達成 ✓":""}</div>
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {section("thanks")}
+        {section("diary")}
+        {section("memo")}
+
+        <Card>
+          <Label>週の振り返りメモ</Label>
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            {[["wins","✨ できたこと・よかったこと"],["insight","🌱 人として気づいたこと"],["nextWeek","🍜 来週の自分へ"]].map(([k,lab])=>(
+              <div key={k}>
+                <div style={{ fontSize:13, fontWeight:700, color:C.ink, marginBottom:5 }}>{lab}</div>
+                <textarea value={weekDraft[k]||""} onChange={(e)=>setWeekDraft((w)=>({...w,[k]:e.target.value}))} rows={2}
+                  style={{ ...inputStyle, resize:"vertical", lineHeight:1.7 }} />
+              </div>
+            ))}
+            <button onClick={saveWeek}
+              style={{ background:C.amber, color:"#2A2313", border:"none", borderRadius:14, padding:"13px 0",
+                fontSize:15, fontWeight:700, fontFamily:BODY, cursor:"pointer" }}>
+              目標と振り返りを保存する
+            </button>
+          </div>
+        </Card>
+      </React.Fragment>
+    );
+  };
+
+  /* ============ 振り返り：月別 ============ */
+  const renderMonth = () => {
+    const dates = Object.keys(postsByDate).filter((k)=>k.startsWith(monthKey)).sort().reverse();
+    const curMonth = todayKey.slice(0,7);
+    const total = dates.reduce((n,k)=>n+postsByDate[k].length, 0);
+    return (
+      <React.Fragment>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <button onClick={()=>setMonthKey((m)=>shiftMonth(m,-1))} style={navArrow}>‹</button>
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontFamily:DISPLAY, fontSize:19, color:C.textOnDark, fontWeight:600 }}>{monthLabel(monthKey)}</div>
+            <div style={{ fontSize:12, color:C.mutedOnDark }}>{dates.length}日・{total}件</div>
+          </div>
+          <button onClick={()=>monthKey<curMonth && setMonthKey((m)=>shiftMonth(m,1))} style={{ ...navArrow, opacity: monthKey<curMonth?1:0.25 }} disabled={monthKey>=curMonth}>›</button>
+        </div>
+        {dates.length === 0 ? (
+          <Card><div style={{ color:C.inkSoft, fontSize:14, textAlign:"center", padding:8 }}>この月の記録はまだないよ</div></Card>
+        ) : dates.map((k)=>(
+          <Card key={k}>
+            <Label>{fmtLong(k)} {db.days[k]&&db.days[k].mood ? db.days[k].mood : ""}</Label>
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {postsByDate[k].map((p)=><PostCard key={p.id} p={p} />)}
+            </div>
+          </Card>
+        ))}
+      </React.Fragment>
+    );
+  };
+
+  /* ============ 振り返り：グラフ ============ */
+  const renderGraph = () => {
+    const byMonth = {};
+    db.posts.forEach((p)=>{
+      const m = p.date.slice(0,7);
+      const s = byMonth[m] || (byMonth[m] = { posts:0, thanks:0, dates:new Set() });
+      s.posts++; s.dates.add(p.date);
+      if (p.type==="thanks") s.thanks++;
+    });
+    Object.entries(db.days).forEach(([k,d])=>{
+      const m = k.slice(0,7);
+      const s = byMonth[m] || (byMonth[m] = { posts:0, thanks:0, dates:new Set() });
+      s.moodSum = (s.moodSum||0) + (d.mood ? MOOD_VAL[d.mood]||0 : 0);
+      s.moodN = (s.moodN||0) + (d.mood ? 1 : 0);
+      s.checks = (s.checks||0) + Object.values(d.habitChecks||{}).filter(Boolean).length;
+    });
+    const months = Object.keys(byMonth).sort().slice(-12);
+    const maxP = Math.max(1, ...months.map((m)=>byMonth[m].posts));
+
+    const yearAgo = toKey(addDays(new Date(), -365));
+    const habitTotals = db.habits.map((h)=>{
+      let c=0; Object.entries(db.days).forEach(([k,d])=>{ if(k>=yearAgo && d.habitChecks && d.habitChecks[h.id]) c++; });
+      return { h, c };
+    }).sort((a,b)=>b.c-a.c);
+    const maxH = Math.max(1, ...habitTotals.map((x)=>x.c));
+
+    const Big = ({n,l}) => (
+      <div style={{ flex:1, textAlign:"center" }}>
+        <div style={{ fontFamily:DISPLAY, fontSize:26, fontWeight:700, color:C.amberDark }}>{n}</div>
+        <div style={{ fontSize:11, color:C.inkSoft }}>{l}</div>
+      </div>
+    );
+
+    return (
+      <React.Fragment>
+        <Card>
+          <div style={{ display:"flex" }}>
+            <Big n={db.posts.length} l="記録した数" />
+            <Big n={thanksPosts.length} l="ありがとう" />
+            <Big n={db.wishlist.filter((w)=>w.doneAt).length} l="叶ったこと" />
+          </div>
+        </Card>
+        <Card>
+          <Label>月ごとのあゆみ</Label>
+          {months.length===0 ? (
+            <div style={{ color:C.inkSoft, fontSize:14, textAlign:"center", padding:8 }}>記録がたまると、ここに変化が出てくるよ📈</div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              <div style={{ display:"flex", fontSize:10, color:C.inkSoft, fontWeight:700 }}>
+                <div style={{ width:62 }} /><div style={{ flex:1 }}>記録数</div>
+                <div style={{ width:36, textAlign:"center" }}>日数</div>
+                <div style={{ width:32, textAlign:"center" }}>気分</div>
+                <div style={{ width:32, textAlign:"center" }}>🧡</div>
+              </div>
+              {months.map((m)=>{
+                const s = byMonth[m];
+                const avg = s.moodN ? s.moodSum/s.moodN : null;
+                return (
+                  <div key={m} style={{ display:"flex", alignItems:"center" }}>
+                    <div style={{ width:62, fontSize:12, color:C.ink, fontWeight:700 }}>{m.slice(2,4)}年{+m.slice(5,7)}月</div>
+                    <div style={{ flex:1, background:"#EFE8D5", borderRadius:6, height:14, overflow:"hidden" }}>
+                      <div style={{ width:`${Math.round(s.posts/maxP*100)}%`, minWidth: s.posts?8:0, height:"100%", background:C.amber, borderRadius:6 }} />
+                    </div>
+                    <div style={{ width:36, textAlign:"center", fontSize:12, color:C.inkSoft }}>{s.dates.size}</div>
+                    <div style={{ width:32, textAlign:"center", fontSize:14 }}>{avg?moodEmojiFor(avg):"—"}</div>
+                    <div style={{ width:32, textAlign:"center", fontSize:12, color:C.plum, fontWeight:700 }}>{s.thanks}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+        {habitTotals.length>0 && (
+          <Card>
+            <Label>習慣の実施回数（過去1年）</Label>
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {habitTotals.map(({h,c})=>(
+                <div key={h.id}>
+                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, marginBottom:3 }}>
+                    <span style={{ color:C.ink }}>{h.name}</span>
+                    <span style={{ color:C.amberDark, fontWeight:700 }}>{c}回</span>
+                  </div>
+                  <div style={{ background:"#EFE8D5", borderRadius:6, height:10, overflow:"hidden" }}>
+                    <div style={{ width:`${Math.round(c/maxH*100)}%`, minWidth:c?6:0, height:"100%", background: habitFreq(h)==="daily"?C.amber:C.green, borderRadius:6 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+      </React.Fragment>
+    );
+  };
+
+  const renderReview = () => (
+    <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+      <div style={{ display:"flex", background:C.panel, borderRadius:12, padding:4, border:`1px solid ${C.line}` }}>
+        {[["week","週"],["month","月別"],["graph","グラフ"]].map(([id,l])=>(
+          <button key={id} onClick={()=>setSub(id)}
+            style={{ flex:1, padding:"8px 0", borderRadius:9, border:"none", cursor:"pointer", fontFamily:BODY, fontSize:13, fontWeight:700,
+              background: sub===id?C.amber:"transparent", color: sub===id?"#2A2313":C.mutedOnDark }}>{l}</button>
+        ))}
+      </div>
+      {sub==="week" && renderWeek()}
+      {sub==="month" && renderMonth()}
+      {sub==="graph" && renderGraph()}
+    </div>
+  );
+
+  /* ============ ありがとう ============ */
+  const renderThanks = () => (
+    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+      <div style={{ textAlign:"center", padding:"6px 0 2px" }}>
+        <div style={{ fontSize:34 }}>🧡</div>
+        <div style={{ fontFamily:DISPLAY, fontSize:20, color:C.textOnDark, fontWeight:600 }}>たまったありがとう</div>
+        <div style={{ color:C.amber, fontFamily:DISPLAY, fontSize:30, fontWeight:700 }}>
+          {thanksPosts.length}<span style={{ fontSize:14, color:C.mutedOnDark, fontFamily:BODY }}> 個</span>
+        </div>
+      </div>
+      {thanksPosts.length===0 ? (
+        <Card><div style={{ color:C.inkSoft, fontSize:14, textAlign:"center", lineHeight:1.8, padding:8 }}>
+          まだ空っぽ。<br />「流れ」タブで🧡を選んで書くと、ここに1枚ずつたまっていくよ。
+        </div></Card>
+      ) : thanksPosts.map((p,i)=>(
+        <div key={p.id} style={{ background: i%2===0?C.card:C.card2, border:`1px solid ${C.cardLine}`, borderRadius:4,
+          padding:"12px 14px", transform:`rotate(${i%2===0?-0.6:0.5}deg)`, boxShadow:"0 2px 6px rgba(0,0,0,0.28)", color:C.ink }}>
+          <div style={{ fontSize:11, color:C.plum, fontWeight:700, marginBottom:3 }}>{fmtLong(p.date)} {fmtTime(p.ts)}</div>
+          <div style={{ fontSize:14, lineHeight:1.7, whiteSpace:"pre-wrap" }}>{p.text}</div>
+          {p.photo && <Photo src={p.photo} style={{ width:"100%", borderRadius:8, marginTop:8, display:"block" }} />}
+        </div>
+      ))}
+    </div>
+  );
+
+  /* ============ やりたい ============ */
+  const renderWish = () => {
+    const active = db.wishlist.filter((w)=>!w.doneAt);
+    const done = db.wishlist.filter((w)=>w.doneAt).sort((a,b)=>(a.doneAt<b.doneAt?1:-1));
+    const add = () => {
+      if (!newWish.trim()) return;
+      saveWishlist([{ id:`w${Date.now()}`, text:newWish.trim(), createdAt:todayKey, doneAt:null }, ...db.wishlist]);
+      setNewWish("");
+    };
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        <div style={{ textAlign:"center", padding:"6px 0 2px" }}>
+          <div style={{ fontSize:34 }}>🌈</div>
+          <div style={{ fontFamily:DISPLAY, fontSize:20, color:C.textOnDark, fontWeight:600 }}>やりたいこと貯金</div>
+        </div>
+        <Card>
+          <div style={{ display:"flex", gap:8 }}>
+            <input value={newWish} onChange={(e)=>setNewWish(e.target.value)} onKeyDown={(e)=>e.key==="Enter"&&add()}
+              placeholder="思いついたことをポンと" style={{ ...inputStyle, flex:1 }} />
+            <button onClick={add} style={{ background:C.amber, border:"none", borderRadius:10, padding:"0 16px",
+              fontWeight:700, fontSize:15, color:"#2A2313", fontFamily:BODY, cursor:"pointer", flexShrink:0 }}>追加</button>
+          </div>
+        </Card>
+        <Card>
+          <Label>やりたいこと（{active.length}個）</Label>
+          {active.length===0 ? (
+            <div style={{ color:"#C9C0AC", fontSize:14, textAlign:"center", padding:8 }}>まだ空っぽ。なんでも入れてOK🍜</div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {active.map((w)=>(
+                <div key={w.id} style={{ display:"flex", alignItems:"center", gap:8, background:"#FFFDF6",
+                  border:`1px solid ${C.cardLine}`, borderRadius:10, padding:"10px 12px" }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:15, color:C.ink, lineHeight:1.5 }}>{w.text}</div>
+                    <div style={{ fontSize:10, color:C.inkSoft }}>{fmtShort(w.createdAt)} に追加</div>
+                  </div>
+                  <button onClick={()=>saveWishlist(db.wishlist.map((x)=>x.id===w.id?{...x,doneAt:todayKey}:x))}
+                    style={{ background:"#E4EEDB", border:`1px solid ${C.green}`, borderRadius:999, padding:"6px 10px",
+                      fontSize:12, fontWeight:700, color:C.greenDark, fontFamily:BODY, cursor:"pointer", flexShrink:0 }}>叶った！</button>
+                  <button onClick={()=>{ if(window.confirm("削除する？")) saveWishlist(db.wishlist.filter((x)=>x.id!==w.id)); }}
+                    style={{ background:"none", border:"none", color:C.inkSoft, fontSize:14, cursor:"pointer", padding:4 }}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+        {done.length>0 && (
+          <Card style={{ background:C.card2 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
+              <Label>🎉 叶ったこと</Label>
+              <div style={{ fontFamily:DISPLAY, fontSize:22, fontWeight:700, color:C.greenDark }}>{done.length}</div>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {done.map((w,i)=>(
+                <div key={w.id} style={{ background: i%2===0?"#FFFDF6":C.card, border:`1px solid ${C.cardLine}`, borderRadius:4,
+                  padding:"10px 12px", display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ color:C.greenDark, fontWeight:700 }}>✓</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:14, color:C.ink }}>{w.text}</div>
+                    <div style={{ fontSize:10, color:C.inkSoft }}>{fmtShort(w.doneAt)} に叶った</div>
+                  </div>
+                  <button onClick={()=>saveWishlist(db.wishlist.map((x)=>x.id===w.id?{...x,doneAt:null}:x))}
+                    style={{ background:"none", border:"none", color:C.inkSoft, fontSize:11, cursor:"pointer", fontFamily:BODY }}>戻す</button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+      </div>
+    );
+  };
+
+  /* ============ 設定 ============ */
+  const renderSettings = () => {
+    const add = () => {
+      if (!newHabit.trim()) return;
+      const h = { id:`h${Date.now()}`, name:newHabit.trim(), freq:newFreq };
+      if (newFreq==="weekly") h.target = newTarget;
+      saveHabits([...db.habits, h]); setNewHabit("");
+    };
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        <Card>
+          <Label>続けたい習慣</Label>
+          <input value={newHabit} onChange={(e)=>setNewHabit(e.target.value)} onKeyDown={(e)=>e.key==="Enter"&&add()}
+            placeholder="例：読書／サウナ／筋トレ" style={{ ...inputStyle, marginBottom:10 }} />
+          <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+            {[["daily","毎日"],["weekly","週◯回"]].map(([f,l])=>(
+              <button key={f} onClick={()=>setNewFreq(f)}
+                style={{ flex:1, padding:"9px 0", borderRadius:10, border:`2px solid ${newFreq===f?C.amber:C.cardLine}`,
+                  background: newFreq===f?"#F0E4CB":"#FFFDF6", fontFamily:BODY, fontSize:14, fontWeight:700, color:C.ink, cursor:"pointer" }}>{l}</button>
+            ))}
+          </div>
+          {newFreq==="weekly" && (
+            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:10, justifyContent:"center" }}>
+              <span style={{ fontSize:13, color:C.inkSoft }}>週に</span>
+              {[1,2,3,4,5,6].map((n)=>(
+                <button key={n} onClick={()=>setNewTarget(n)}
+                  style={{ width:32, height:32, borderRadius:"50%", border:`2px solid ${newTarget===n?C.amberDark:C.cardLine}`,
+                    background: newTarget===n?C.amber:"#FFFDF6", color: newTarget===n?"#fff":C.ink, fontWeight:700, fontFamily:BODY, cursor:"pointer" }}>{n}</button>
+              ))}
+              <span style={{ fontSize:13, color:C.inkSoft }}>回</span>
+            </div>
+          )}
+          <button onClick={add} style={{ background:C.amber, border:"none", borderRadius:10, padding:"11px 0", width:"100%",
+            fontWeight:700, fontSize:15, color:"#2A2313", fontFamily:BODY, cursor:"pointer" }}>追加する</button>
+          {db.habits.length>0 && (
+            <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:12 }}>
+              {db.habits.map((h)=>(
+                <div key={h.id} style={{ display:"flex", alignItems:"center", gap:8, background:"#FFFDF6",
+                  border:`1px solid ${C.cardLine}`, borderRadius:10, padding:"10px 12px" }}>
+                  <span style={{ fontSize:15, color:C.ink, flex:1 }}>{h.name}</span>
+                  <span style={{ fontSize:11, fontWeight:700, color: habitFreq(h)==="daily"?C.amberDark:C.greenDark,
+                    background: habitFreq(h)==="daily"?"#F5E7CC":"#E4EEDB", borderRadius:999, padding:"3px 9px" }}>
+                    {habitFreq(h)==="daily"?"毎日":`週${h.target||1}回`}
+                  </span>
+                  <button onClick={()=>{ if(window.confirm(`「${h.name}」を削除する？`)) saveHabits(db.habits.filter((x)=>x.id!==h.id)); }}
+                    style={{ background:"none", border:"none", color:C.inkSoft, fontSize:13, cursor:"pointer", fontFamily:BODY }}>削除</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card style={{ background:C.card2 }}>
+          <Label>💾 バックアップ（かんたん・設定いらず）</Label>
+          <div style={{ fontSize:13, color:C.inkSoft, lineHeight:1.7, marginBottom:10 }}>
+            月イチでこれを押してファイルを保存しておけば、記録は守れるよ
+          </div>
+          <button onClick={exportBackup} style={{ width:"100%", background:C.amber, border:"none", borderRadius:10,
+            padding:"11px 0", fontWeight:700, fontSize:15, color:"#2A2313", fontFamily:BODY, cursor:"pointer" }}>
+            バックアップを書き出す
+          </button>
+          <label style={{ display:"block", marginTop:8, width:"100%", background:"#FFFDF6", border:`1px solid ${C.cardLine}`,
+            borderRadius:10, padding:"11px 0", fontWeight:700, fontSize:14, color:C.ink, fontFamily:BODY, cursor:"pointer", textAlign:"center" }}>
+            バックアップを読み込む
+            <input type="file" accept="application/json" style={{ display:"none" }} onChange={(e)=>importBackup(e.target.files && e.target.files[0])} />
+          </label>
+        </Card>
+
+        <Card>
+          <Label>📊 スプレッドシート連携（あとでOK）</Label>
+          <div style={{ fontSize:13, color:C.inkSoft, lineHeight:1.7, marginBottom:8 }}>
+            繋がなくても普通に使えるよ。繋ぐと、書いた記録がシートにも自動でたまる
+          </div>
+          <input value={urlDraft} onChange={(e)=>setUrlDraft(e.target.value)}
+            placeholder="https://script.google.com/macros/s/…/exec" style={{ ...inputStyle, fontSize:12 }} />
+          <div style={{ display:"flex", gap:8, marginTop:10 }}>
+            <button onClick={testConnection} style={{ flex:1, background:C.amber, border:"none", borderRadius:10,
+              padding:"10px 0", fontWeight:700, fontSize:14, color:"#2A2313", fontFamily:BODY, cursor:"pointer" }}>接続テスト</button>
+            {gasUrl && (
+              <button onClick={pushAll} style={{ flex:1, background:"#FFFDF6", border:`1px solid ${C.cardLine}`, borderRadius:10,
+                padding:"10px 0", fontWeight:700, fontSize:14, color:C.ink, fontFamily:BODY, cursor:"pointer" }}>全部シートへ送る</button>
+            )}
+          </div>
+          {syncMsg && <div style={{ fontSize:13, color:C.ink, marginTop:8, fontWeight:700 }}>{syncMsg}</div>}
+        </Card>
+
+        <div style={{ fontSize:12, color:C.mutedOnDark, textAlign:"center", lineHeight:1.8 }}>
+          記録はこの端末に自動保存されるよ。<br />ホーム画面に追加すればアプリみたいに開ける📱
+        </div>
+      </div>
+    );
+  };
+
+  /* ============ レイアウト ============ */
+  const TABS = [
+    { id:"flow", label:"流れ", icon:"🌙" },
+    { id:"review", label:"振り返り", icon:"📖" },
+    { id:"thanks", label:"ありがとう", icon:"🧡" },
+    { id:"wish", label:"やりたい", icon:"🌈" },
+    { id:"settings", label:"設定", icon:"⚙️" },
+  ];
+
+  return (
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:BODY }}>
+      <header style={{ padding:"18px 20px 8px", maxWidth:480, margin:"0 auto", display:"flex", alignItems:"baseline", justifyContent:"space-between" }}>
+        <div>
+          <span style={{ fontFamily:DISPLAY, fontSize:23, color:C.amber, fontWeight:700 }}>ひとひ帳</span>
+          <span style={{ fontSize:11, color:C.mutedOnDark, marginLeft:10 }}>思ったとき、ひと言だけ</span>
+        </div>
+      </header>
+
+      {flash && (
+        <div style={{ position:"fixed", top:14, left:0, right:0, display:"flex", justifyContent:"center", zIndex:50, pointerEvents:"none" }}>
+          <div style={{ background:C.green, color:"#fff", borderRadius:999, padding:"8px 18px", fontSize:14, fontWeight:700, boxShadow:"0 4px 14px rgba(0,0,0,0.4)" }}>{flash}</div>
+        </div>
+      )}
+
+      <main style={{ maxWidth:480, margin:"0 auto", padding:"8px 16px 96px" }}>
+        {tab==="flow" && renderFlow()}
+        {tab==="review" && renderReview()}
+        {tab==="thanks" && renderThanks()}
+        {tab==="wish" && renderWish()}
+        {tab==="settings" && renderSettings()}
+      </main>
+
+      <nav style={{ position:"fixed", bottom:0, left:0, right:0, background:C.panel, borderTop:`1px solid ${C.line}`,
+        padding:"8px 0 max(10px, env(safe-area-inset-bottom))" }}>
+        <div style={{ maxWidth:480, margin:"0 auto", display:"flex" }}>
+          {TABS.map((t)=>(
+            <button key={t.id} onClick={()=>{ setTab(t.id); window.scrollTo({top:0}); }}
+              style={{ flex:1, background:"none", border:"none", cursor:"pointer", padding:"4px 0", fontFamily:BODY }}>
+              <div style={{ fontSize:20, filter: tab===t.id?"none":"grayscale(1) opacity(0.55)" }}>{t.icon}</div>
+              <div style={{ fontSize:10, fontWeight: tab===t.id?700:400, color: tab===t.id?C.amber:C.mutedOnDark }}>{t.label}</div>
+            </button>
+          ))}
+        </div>
+      </nav>
+    </div>
+  );
 }
-function doImport(text){
-  const lines=text.split(/\r?\n/).filter(l=>l.trim());
-  if(!lines.length){say("読み取れる行がありませんでした。");return}
-  const sep=lines[0].includes("\t")?"\t":",";
-  let rows=lines.map(l=>splitLine(l,sep));
-  let map={name:0,addr:1,stn:2,ex:3,walk:4,blk:5};
-  const head=rows[0];
-  const isHead=IMPCOL.some(([k,ws])=>head.some(h=>ws.some(w=>h.includes(w))));
-  if(isHead){
-    map={};IMPCOL.forEach(([k,ws])=>{
-      const i=head.findIndex(h=>ws.some(w=>h.includes(w)));if(i>=0)map[k]=i});
-    rows=rows.slice(1);
-  }
-  if(map.name==null){say("「店舗名」の列が見つかりませんでした。見出しをご確認ください。");return}
-  let addc=0,skip=0,unset=0,upd=0,off=0;const dup=[],amb=[];
-  const doUpd=document.getElementById("i_upd").checked;
-  const iTgt=head.findIndex(h=>String(h).includes("点検対象"));
-  const iSts=head.findIndex(h=>String(h).includes("ステータス"));
-  rows.forEach(r=>{
-    const nm=(r[map.name]||"").trim();if(!nm)return;
-    if(isHead&&iTgt>=0&&String(r[iTgt]||"").trim()==="×"){off++;return}
-    if(isHead&&iSts>=0&&String(r[iSts]||"").includes("対象外")){off++;return}
-    const addr=map.addr!=null?(r[map.addr]||"").trim():"";
-    let stnRaw=map.stn!=null?(r[map.stn]||"").trim().replace(/駅$/,""):"";
-    if(/未定|未確認/.test(addr)||/未定|未確認/.test(stnRaw)){off++;return}
-    if(!addr&&isHead&&iSts>=0&&/計画中/.test(String(r[iSts]||""))){off++;return}
-    const hit=findExisting(nm,addr,stnRaw.split("／")[0]);
-    if(hit&&hit.ambiguous){amb.push(nm+"（"+hit.cands.map(x=>x.name).join("・")+"のどれか）");skip++;return}
-    if(hit){
-      skip++;
-      if(doUpd){
-        const stn0=map.stn!=null?(r[map.stn]||"").trim().replace(/駅$/,""):"";
-        const ex0=map.ex!=null?(r[map.ex]||"").trim():"";
-        const w0=parseInt(map.walk!=null?r[map.walk]:"");
-        const target=stn0||hit.stn;
-        if(ex0||w0){const k=hit.id+"|"+target;OV.stn[k]=OV.stn[k]||{};
-          if(ex0)OV.stn[k].ex=ex0; if(w0)OV.stn[k].w=w0;
-          if(stn0&&!hit.stns.some(o=>o.s===stn0))
-            OV.extra[hit.id]=(OV.extra[hit.id]||[]).concat([stn0]);
-          upd++}
-      }
-      return;
-    }
-    let stn=stnRaw.split("／")[0];
-    if(!stn)stn=nm.replace(/店$/,"");
-    let blk=map.blk!=null?(r[map.blk]||"").trim().toUpperCase().slice(0,1):"";
-    if(!BL[blk])blk=guessBlk(addr+stn+nm);
-    if(blk==="Z")unset++;
-    const same=ST().filter(x=>x.stns.some(o=>o.s===stn));
-    if(same.length)dup.push(nm+"（"+same.map(x=>x.name).join("・")+"と同じ駅）");
-    OV.news=(OV.news||[]).concat([{id:"N"+Date.now().toString(36)+addc,name:nm,blk:blk,addr:addr,
-      stn:stn,note:"取り込み登録",
-      stns:[{s:stn,ex:map.ex!=null?(r[map.ex]||"").trim():"",
-        w:parseInt(map.walk!=null?r[map.walk]:"")||5,n:0}]}]);
-    addc++;
-  });
-  buildPicker();render();
-  document.getElementById("i_res").innerHTML="<b>新規 "+addc+"件を登録しました。</b>"+
-    (skip?"　既にある店 "+skip+"件は二重登録せず"+(upd?"、うち "+upd+"件は出口・徒歩を更新しました。":"スキップしました。"):"")+
-    (unset?'　<span style="color:#C0392B">'+unset+"件はブロックが判定できず「Z：未分類」です。下の一覧で直してください。</span>":"")+
-    (off?"　点検対象外・住所未定の "+off+"行は取り込みませんでした。":"")+
-    (amb.length?'<br><span style="color:#C0392B"><b>判断できなかった '+amb.length+"件：</b>"+
-      amb.join("／")+"　同じ住所に複数の店があります。手動で確認してください。</span>":"")+
-    (dup.length?'<br><span style="color:#8A6212"><b>要確認 '+dup.length+"件（同じ駅に別の店あり）：</b>"+
-      dup.join("／")+"</span>":"");
-  say(addc+"件を登録しました。");
-}
-function impText(){doImport(document.getElementById("i_tsv").value)}
-function impCsv(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>doImport(String(r.result).replace(/^\ufeff/,""));r.readAsText(f,"UTF-8")}
-function setNewBlk(id,b){const x=(OV.news||[]).find(y=>y.id===id);if(x){x.blk=b;buildPicker();render()}}
-function toggleLinks(){document.getElementById("links").classList.toggle("on")}
-function copyTbl(){const t=["順\t店舗\t最寄駅\t点検時刻\t閉店時刻"].concat(
-  window._ann.map((x,i)=>[i+1,x.name,x.stn,x.a+"〜"+x.b,x.c].join("\t"))).join("\n");
-  navigator.clipboard.writeText(t).then(()=>say("表をコピーしました。Excelに貼り付けできます。"),
-    ()=>say("コピーできませんでした。表を選択して手動でコピーしてください。"))}
-function dl(name,rows){
-  const csv="\ufeff"+rows.map(r=>r.map(c=>'"'+String(c==null?"":c).replace(/"/g,'""')+'"').join(",")).join("\r\n");
-  const b=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click()}
-function csvRough(){
-  const rows=[["コース","点検日","順","時刻","種別","拠点・内容","使用駅"]];
-  courses.forEach(c=>{const R=calc(c);let k=0;
-    R.rows.forEach(r=>{
-      if(r.k==="stop"){k++;rows.push([c.name,c.date,k,m2t(r.a)+"〜"+m2t(r.b),"点検",r.s.name,r.stn.s])}
-      else if(r.k==="ev"){rows.push([c.name,c.date,"",m2t(r.t)+(r.min?"〜"+m2t(r.t+r.min):""),r.label,r.min?r.min+"分":"車内",""])}
-      else if(r.k==="train"){rows.push([c.name,c.date,"",m2t(r.dep)+"〜"+m2t(r.arr),"移動",r.sa.s+"→"+r.sb.s,""])}
-      else if(r.k==="pair"){rows.push([c.name,c.date,"","","徒歩",r.a.name+"→"+r.b.name,r.sa.s])}});
-    rows.push([c.name,c.date,"",m2t(R.end),"終了","",""]);rows.push([])});
-  dl("環境整備点検_ざっくりルート案.csv",rows)}
-function csvFull(){
-  const rows=[["コース","点検日","順","時刻","種別","拠点・内容","使用駅","出口","路線・番線","乗車位置","所要(分)","閉店時刻","検証"]];
-  courses.forEach(c=>{const R=calc(c);let k=0;
-    R.rows.forEach(r=>{
-      if(r.k==="stop"){k++;rows.push([c.name,c.date,k,m2t(r.a)+"〜"+m2t(r.b),"点検",r.s.name,r.stn.s,r.stn.ex,"","","",m2t(r.c),""])}
-      else if(r.k==="ev"){rows.push([c.name,c.date,"",m2t(r.t),r.label,r.min?r.min+"分":"車内で実施","","","","",r.min,"",""])}
-      else if(r.k==="pair"){rows.push([c.name,c.date,"","","徒歩",r.a.name+"→"+r.b.name,r.sa.s,"","","",r.w,"",""])}
-      else if(r.k==="train"){const g=r.g;
-        rows.push([c.name,c.date,"",m2t(r.dep)+"〜"+m2t(r.arr),"電車",r.sa.s+"→"+r.sb.s,"","",
-          (g.line||"")+(g.track?" / "+g.track:""),g.car||"",r.dur,"",
-          ((r.fd||r.fa)?"時刻確定":"")+(g.fixed?"／号車確定":(g.none?"／データなし":(g.rev?"／逆方向流用・要確認":"／未検証")))])}});
-    rows.push([c.name,c.date,"",m2t(R.end),"終了","","","","","","","",""]);rows.push([])});
-  dl("環境整備点検_詳細ルート案.csv",rows)}
-function expAll(){const b=new Blob([JSON.stringify({courses:courses,OV:OV},null,1)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(b);
-  a.download="環境整備点検_ルートデータ.json";a.click()}
-function impAll(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const o=JSON.parse(r.result);
-    if(o.courses&&o.courses.length){courses=o.courses;ci=0}
-    if(o.OV)OV={stn:o.OV.stn||{},seg:o.OV.seg||{},pair:o.OV.pair||{},extra:o.OV.extra||{},news:o.OV.news||[],hide:o.OV.hide||{}};
-    buildPicker();render();say("読み込みました。")}catch(err){say("ファイルを読めませんでした。")}};
-  r.readAsText(f)}
-["insp","buf","same","close"].forEach(id=>document.getElementById(id).addEventListener("change",render));
-buildPicker();boot();
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
